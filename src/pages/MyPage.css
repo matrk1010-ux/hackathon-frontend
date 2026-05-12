@@ -1,0 +1,158 @@
+.mypage {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.mypage-profile {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  margin-bottom: 32px;
+}
+
+.mypage-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+
+.mypage-name {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 0 0 4px;
+  color: #333;
+}
+
+.mypage-email {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+.mypage-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0;
+}
+
+.mypage-tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 15px;
+  cursor: pointer;
+  color: #666;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.mypage-tab.active {
+  color: #ff6b35;
+  border-bottom-color: #ff6b35;
+  font-weight: bold;
+}
+
+.mypage-tab:hover {
+  color: #ff6b35;
+}
+
+.mypage-content {
+  min-height: 200px;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.mypage-empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.mypage-empty-text {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.mypage-sell-btn {
+  background: #ff6b35;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 16px;
+  font-weight: bold;
+}
+
+.mypage-sell-btn:hover {
+  background: #e55a25;
+}
+
+.purchase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.purchase-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.purchase-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.purchase-title {
+  font-size: 15px;
+  font-weight: bold;
+  margin: 0 0 4px;
+  color: #333;
+}
+
+.purchase-date {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}
+
+.purchase-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #e53935;
+  margin: 0;
+}
+
+.mypage-loading {
+  text-align: center;
+  padding: 60px;
+  color: #999;
+}
+
+.mypage-login {
+  text-align: center;
+  padding: 60px;
+  color: #999;
+  font-size: 18px;
+}

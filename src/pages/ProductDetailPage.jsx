@@ -40,12 +40,12 @@ const ProductDetailPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchProduct(); }, [id]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user?.email && product) {
       fetchLikeStatus();
       recordView(product.id, user.email).catch(() => {});
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, product]);
 
   const fetchProduct = async () => {

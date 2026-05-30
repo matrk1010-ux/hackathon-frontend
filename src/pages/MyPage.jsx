@@ -17,6 +17,7 @@ import {
   Button,
   Alert,
   List,
+  ListItem,
   ListItemText,
   ListItemButton,
   Divider,
@@ -169,29 +170,34 @@ const MyPage = () => {
                     <List disablePadding>
                       {purchases.map((purchase, index) => (
                         <React.Fragment key={purchase.id}>
-                          <ListItemButton onClick={() => navigate(`/products/${purchase.product_id}`)}>
-                            <ListItemText
-                              primary={purchase.product?.title || `商品ID: ${purchase.product_id}`}
-                              secondary={new Date(purchase.purchased_at).toLocaleDateString("ja-JP")}
-                              primaryTypographyProps={{ fontWeight: 600 }}
-                            />
-                            <Chip
-                              label={`¥${purchase.price.toLocaleString()}`}
-                              color="primary"
-                              size="small"
-                              sx={{ fontWeight: 700, mr: 1 }}
-                            />
-                            <Chip
-                              label="返品"
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                returnProduct(purchase.id, user.email).then(fetchData);
-                              }}
-                            />
-                          </ListItemButton>
+                          <ListItem
+                            disablePadding
+                            secondaryAction={
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => returnProduct(purchase.id, user.email).then(fetchData)}
+                                sx={{ minWidth: 56 }}
+                              >
+                                返品
+                              </Button>
+                            }
+                          >
+                            <ListItemButton onClick={() => navigate(`/products/${purchase.product_id}`)}>
+                              <ListItemText
+                                primary={purchase.product?.title || `商品ID: ${purchase.product_id}`}
+                                secondary={new Date(purchase.purchased_at).toLocaleDateString("ja-JP")}
+                                primaryTypographyProps={{ fontWeight: 600 }}
+                              />
+                              <Chip
+                                label={`¥${purchase.price.toLocaleString()}`}
+                                color="primary"
+                                size="small"
+                                sx={{ fontWeight: 700, mr: 9 }}
+                              />
+                            </ListItemButton>
+                          </ListItem>
                           {index < purchases.length - 1 && <Divider />}
                         </React.Fragment>
                       ))}

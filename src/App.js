@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import SellPage from "./pages/SellPage";
 import MyPage from "./pages/MyPage";
+import AiSetPage from "./pages/AiSetPage";
 
 const theme = createTheme({
   palette: {
@@ -43,6 +44,7 @@ function App() {
             <Route path="/products/:id" element={<ProductDetailPage />} />
             <Route path="/sell" element={<SellPage />} />
             <Route path="/mypage" element={<MyPage />} />
+            <Route path="/ai-set" element={<AiSetPage />} />
           </Routes>
         </BrowserRouter>
       </UserProvider>

@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import AddBoxIcon from "@mui/icons-material/AddBox";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 const Header = () => {
   const { user, setUser } = useUser();
@@ -46,6 +47,17 @@ const Header = () => {
 
         {user ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* AIセットボタン */}
+            <Button
+              color="inherit"
+              startIcon={<AutoAwesomeIcon />}
+              component={Link}
+              to="/ai-set"
+              sx={{ fontWeight: 600 }}
+            >
+              AIセット
+            </Button>
+
             {/* 出品ボタン */}
             <Button
               color="inherit"

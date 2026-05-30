@@ -264,7 +264,7 @@ const AiSetPage = () => {
             placeholder="欲しいものや状況を入力してください..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && sendMessage()}
             multiline
             maxRows={3}
           />

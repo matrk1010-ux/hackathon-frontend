@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { getSellerProducts } from "../api/products";
-import { getMyPurchases } from "../api/purchases";
+import { getMyPurchases, returnProduct } from "../api/purchases";
 import ProductCard from "../components/ProductCard";
 import {
   Container,
@@ -179,7 +179,17 @@ const MyPage = () => {
                               label={`¥${purchase.price.toLocaleString()}`}
                               color="primary"
                               size="small"
-                              sx={{ fontWeight: 700 }}
+                              sx={{ fontWeight: 700, mr: 1 }}
+                            />
+                            <Chip
+                              label="返品"
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                returnProduct(purchase.id, user.email).then(fetchData);
+                              }}
                             />
                           </ListItemButton>
                           {index < purchases.length - 1 && <Divider />}

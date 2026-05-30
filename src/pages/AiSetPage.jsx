@@ -14,6 +14,15 @@ import {
   InputAdornment,
   Alert,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Avatar,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SendIcon from "@mui/icons-material/Send";
@@ -33,6 +42,7 @@ const AiSetPage = () => {
   const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [buying, setBuying] = useState(false);
   const [buyResult, setBuyResult] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -50,12 +60,8 @@ const AiSetPage = () => {
     setBuyResult(null);
 
     try {
-      const res = await aiSetChat(
-        nextMessages,
-        budget ? parseInt(budget) : null
-      );
+      const res = await aiSetChat(nextMessages, budget ? parseInt(budget) : null);
       const { reply, suggested_products } = res.data;
-
       setMessages((prev) => [...prev, { role: "model", content: reply }]);
       setSuggestedProducts(suggested_products || []);
     } catch (e) {
@@ -71,11 +77,9 @@ const AiSetPage = () => {
   const handleBulkBuy = async () => {
     if (!user || suggestedProducts.length === 0) return;
     setBuying(true);
+    setConfirmOpen(false);
     try {
-      const res = await bulkBuyProducts(
-        suggestedProducts.map((p) => p.id),
-        user.email
-      );
+      const res = await bulkBuyProducts(suggestedProducts.map((p) => p.id), user.email);
       const { purchased, failed, total_price } = res.data;
       setBuyResult({ purchased, failed, total_price });
       setSuggestedProducts([]);
@@ -108,26 +112,14 @@ const AiSetPage = () => {
         {messages.length === 0 && (
           <Box sx={{ textAlign: "center", mt: 6, color: "text.secondary" }}>
             <AutoAwesomeIcon sx={{ fontSize: 48, mb: 2, opacity: 0.3 }} />
-            <Typography variant="body1">
-              例：「鬼滅の刃1巻と3巻持ってます」
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
-              「来月から一人暮らし始めます」
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
-              「登山を始めたいです」
-            </Typography>
+            <Typography variant="body1">例：「鬼滅の刃1巻と3巻持ってます」</Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>「来月から一人暮らし始めます」</Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>「登山を始めたいです」</Typography>
           </Box>
         )}
 
         {messages.map((msg, i) => (
-          <Box
-            key={i}
-            sx={{
-              display: "flex",
-              justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
-            }}
-          >
+          <Box key={i} sx={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
             <Paper
               elevation={0}
               sx={{
@@ -164,22 +156,14 @@ const AiSetPage = () => {
                 <Card key={product.id} elevation={1} sx={{ borderRadius: 2 }}>
                   <CardActionArea onClick={() => navigate(`/products/${product.id}`)}>
                     {product.image_url ? (
-                      <CardMedia
-                        component="img"
-                        height="100"
-                        image={product.image_url}
-                        alt={product.title}
-                        sx={{ objectFit: "cover" }}
-                      />
+                      <CardMedia component="img" height="100" image={product.image_url} alt={product.title} sx={{ objectFit: "cover" }} />
                     ) : (
                       <Box sx={{ height: 100, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "grey.100" }}>
                         <ImageNotSupportedIcon sx={{ color: "grey.400" }} />
                       </Box>
                     )}
                     <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                      <Typography variant="caption" noWrap display="block">
-                        {product.title}
-                      </Typography>
+                      <Typography variant="caption" noWrap display="block">{product.title}</Typography>
                       <Typography variant="body2" fontWeight={700} color="primary">
                         ¥{product.price.toLocaleString()}
                       </Typography>
@@ -198,7 +182,7 @@ const AiSetPage = () => {
                   variant="contained"
                   size="small"
                   startIcon={buying ? <CircularProgress size={14} color="inherit" /> : <ShoppingCartCheckoutIcon />}
-                  onClick={handleBulkBuy}
+                  onClick={() => setConfirmOpen(true)}
                   disabled={buying}
                 >
                   セットをまとめて購入
@@ -225,7 +209,7 @@ const AiSetPage = () => {
                   <Box sx={{ mt: 0.5 }}>
                     {buyResult.failed.map((f) => (
                       <Typography key={f.product_id} variant="caption" display="block">
-                        ID:{f.product_id} — {f.reason}
+                        {f.reason}
                       </Typography>
                     ))}
                   </Box>
@@ -249,9 +233,7 @@ const AiSetPage = () => {
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
             sx={{ width: 140 }}
-            InputProps={{
-              startAdornment: <InputAdornment position="start">¥</InputAdornment>,
-            }}
+            InputProps={{ startAdornment: <InputAdornment position="start">¥</InputAdornment> }}
           />
           <Typography variant="caption" color="text.secondary">
             予算を設定するとその範囲内で提案します
@@ -278,6 +260,54 @@ const AiSetPage = () => {
           </Button>
         </Box>
       </Box>
+
+      {/* 購入確認ダイアログ */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>購入内容の確認</DialogTitle>
+        <DialogContent dividers>
+          <List disablePadding>
+            {suggestedProducts.map((product) => (
+              <ListItem key={product.id} disablePadding sx={{ py: 1 }}>
+                <ListItemAvatar>
+                  {product.image_url ? (
+                    <Avatar variant="rounded" src={product.image_url} sx={{ width: 56, height: 56, mr: 1 }} />
+                  ) : (
+                    <Avatar variant="rounded" sx={{ width: 56, height: 56, mr: 1, bgcolor: "grey.200" }}>
+                      <ImageNotSupportedIcon sx={{ color: "grey.400" }} />
+                    </Avatar>
+                  )}
+                </ListItemAvatar>
+                <ListItemText
+                  primary={product.title}
+                  secondary={product.category || ""}
+                  sx={{ ml: 1 }}
+                />
+                <Typography variant="body2" fontWeight={700} color="primary" sx={{ ml: 2, whiteSpace: "nowrap" }}>
+                  ¥{product.price.toLocaleString()}
+                </Typography>
+              </ListItem>
+            ))}
+          </List>
+          <Divider sx={{ my: 1.5 }} />
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Typography variant="subtitle1" fontWeight={700}>
+              合計　¥{totalPrice.toLocaleString()}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setConfirmOpen(false)} color="inherit">
+            キャンセル
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<ShoppingCartCheckoutIcon />}
+            onClick={handleBulkBuy}
+          >
+            購入する
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

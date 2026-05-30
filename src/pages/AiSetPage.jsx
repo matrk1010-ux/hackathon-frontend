@@ -23,6 +23,7 @@ import {
   ListItemAvatar,
   ListItemText,
   Avatar,
+  Checkbox,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SendIcon from "@mui/icons-material/Send";
@@ -40,10 +41,16 @@ const AiSetPage = () => {
   const [budget, setBudget] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestedProducts, setSuggestedProducts] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [buying, setBuying] = useState(false);
   const [buyResult, setBuyResult] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const bottomRef = useRef(null);
+
+  const toggleSelect = (id) =>
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -64,6 +71,7 @@ const AiSetPage = () => {
       const { reply, suggested_products } = res.data;
       setMessages((prev) => [...prev, { role: "model", content: reply }]);
       setSuggestedProducts(suggested_products || []);
+      setSelectedIds((suggested_products || []).map((p) => p.id));
     } catch (e) {
       setMessages((prev) => [
         ...prev,
@@ -74,15 +82,18 @@ const AiSetPage = () => {
     }
   };
 
+  const selectedProducts = suggestedProducts.filter((p) => selectedIds.includes(p.id));
+
   const handleBulkBuy = async () => {
-    if (!user || suggestedProducts.length === 0) return;
+    if (!user || selectedProducts.length === 0) return;
     setBuying(true);
     setConfirmOpen(false);
     try {
-      const res = await bulkBuyProducts(suggestedProducts.map((p) => p.id), user.email);
+      const res = await bulkBuyProducts(selectedProducts.map((p) => p.id), user.email);
       const { purchased, failed, total_price } = res.data;
       setBuyResult({ purchased, failed, total_price });
       setSuggestedProducts([]);
+      setSelectedIds([]);
     } catch (e) {
       setBuyResult({ error: "購入に失敗しました" });
     } finally {
@@ -90,7 +101,7 @@ const AiSetPage = () => {
     }
   };
 
-  const totalPrice = suggestedProducts.reduce((sum, p) => sum + p.price, 0);
+  const totalPrice = selectedProducts.reduce((sum, p) => sum + p.price, 0);
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", height: "calc(100vh - 64px)", display: "flex", flexDirection: "column" }}>
@@ -149,43 +160,68 @@ const AiSetPage = () => {
         {suggestedProducts.length > 0 && (
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
-              アプリ内の関連商品
+              アプリ内の関連商品（購入したいものにチェック）
             </Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1.5, mt: 1 }}>
-              {suggestedProducts.map((product) => (
-                <Card key={product.id} elevation={1} sx={{ borderRadius: 2 }}>
-                  <CardActionArea onClick={() => navigate(`/products/${product.id}`)}>
-                    {product.image_url ? (
-                      <CardMedia component="img" height="100" image={product.image_url} alt={product.title} sx={{ objectFit: "cover" }} />
-                    ) : (
-                      <Box sx={{ height: 100, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "grey.100" }}>
-                        <ImageNotSupportedIcon sx={{ color: "grey.400" }} />
-                      </Box>
-                    )}
-                    <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                      <Typography variant="caption" noWrap display="block">{product.title}</Typography>
-                      <Typography variant="body2" fontWeight={700} color="primary">
-                        ¥{product.price.toLocaleString()}
-                      </Typography>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
-              ))}
+              {suggestedProducts.map((product) => {
+                const checked = selectedIds.includes(product.id);
+                return (
+                  <Card
+                    key={product.id}
+                    elevation={checked ? 3 : 1}
+                    sx={{
+                      borderRadius: 2,
+                      position: "relative",
+                      border: checked ? "2px solid" : "2px solid transparent",
+                      borderColor: checked ? "primary.main" : "transparent",
+                    }}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onChange={() => toggleSelect(product.id)}
+                      sx={{
+                        position: "absolute",
+                        top: 2,
+                        right: 2,
+                        zIndex: 1,
+                        bgcolor: "rgba(255,255,255,0.8)",
+                        borderRadius: "50%",
+                        "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
+                      }}
+                    />
+                    <CardActionArea onClick={() => navigate(`/products/${product.id}`)}>
+                      {product.image_url ? (
+                        <CardMedia component="img" height="100" image={product.image_url} alt={product.title} sx={{ objectFit: "cover" }} />
+                      ) : (
+                        <Box sx={{ height: 100, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "grey.100" }}>
+                          <ImageNotSupportedIcon sx={{ color: "grey.400" }} />
+                        </Box>
+                      )}
+                      <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
+                        <Typography variant="caption" noWrap display="block">{product.title}</Typography>
+                        <Typography variant="body2" fontWeight={700} color="primary">
+                          ¥{product.price.toLocaleString()}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                );
+              })}
             </Box>
 
             {user && (
               <Box sx={{ mt: 1.5, display: "flex", alignItems: "center", gap: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  合計 <strong>¥{totalPrice.toLocaleString()}</strong>
+                  選択中 {selectedProducts.length}点 / 合計 <strong>¥{totalPrice.toLocaleString()}</strong>
                 </Typography>
                 <Button
                   variant="contained"
                   size="small"
                   startIcon={buying ? <CircularProgress size={14} color="inherit" /> : <ShoppingCartCheckoutIcon />}
                   onClick={() => setConfirmOpen(true)}
-                  disabled={buying}
+                  disabled={buying || selectedProducts.length === 0}
                 >
-                  セットをまとめて購入
+                  選択した商品を購入
                 </Button>
               </Box>
             )}
@@ -266,7 +302,7 @@ const AiSetPage = () => {
         <DialogTitle>購入内容の確認</DialogTitle>
         <DialogContent dividers>
           <List disablePadding>
-            {suggestedProducts.map((product) => (
+            {selectedProducts.map((product) => (
               <ListItem key={product.id} disablePadding sx={{ py: 1 }}>
                 <ListItemAvatar>
                   {product.image_url ? (

@@ -12,6 +12,10 @@ export const getProduct = (id) =>
 export const createProduct = (data, sellerEmail) =>
   client.post("/products/", data, { params: { seller_email: sellerEmail } });
 
+// 出品取り下げ（削除）
+export const deleteProduct = (productId, sellerEmail) =>
+  client.delete(`/products/${productId}`, { params: { seller_email: sellerEmail } });
+
 // 自分の出品一覧
 export const getSellerProducts = (email) =>
   client.get(`/products/seller/${email}`);

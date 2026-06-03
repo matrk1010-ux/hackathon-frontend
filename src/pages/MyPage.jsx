@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import { getSellerProducts } from "../api/products";
+import { getSellerProducts, deleteProduct } from "../api/products";
 import { getMyPurchases, returnProduct } from "../api/purchases";
 import ProductCard from "../components/ProductCard";
 import {
@@ -22,9 +22,15 @@ import {
   ListItemButton,
   Divider,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 const MyPage = () => {
   const { user } = useUser();
@@ -33,6 +39,8 @@ const MyPage = () => {
   const [sellingProducts, setSellingProducts] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [withdrawTarget, setWithdrawTarget] = useState(null);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user?.email) fetchData(); }, [user]);
@@ -50,6 +58,20 @@ const MyPage = () => {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!withdrawTarget) return;
+    setWithdrawing(true);
+    try {
+      await deleteProduct(withdrawTarget.id, user.email);
+      setWithdrawTarget(null);
+      await fetchData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setWithdrawing(false);
     }
   };
 
@@ -136,6 +158,17 @@ const MyPage = () => {
                     {available.map((p) => (
                       <Grid item xs={6} sm={4} md={3} key={p.id}>
                         <ProductCard product={p} />
+                        <Button
+                          fullWidth
+                          size="small"
+                          color="error"
+                          variant="outlined"
+                          startIcon={<DeleteOutlineIcon />}
+                          onClick={() => setWithdrawTarget(p)}
+                          sx={{ mt: 0.5 }}
+                        >
+                          取り下げる
+                        </Button>
                       </Grid>
                     ))}
                   </Grid>
@@ -209,6 +242,30 @@ const MyPage = () => {
           </Box>
         )}
       </Container>
+
+      {/* 取り下げ確認ダイアログ */}
+      <Dialog open={Boolean(withdrawTarget)} onClose={() => setWithdrawTarget(null)}>
+        <DialogTitle>出品を取り下げますか？</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            「{withdrawTarget?.title}」を取り下げます。この操作は取り消せません。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setWithdrawTarget(null)} color="inherit" disabled={withdrawing}>
+            キャンセル
+          </Button>
+          <Button
+            onClick={handleWithdraw}
+            color="error"
+            variant="contained"
+            disabled={withdrawing}
+            startIcon={withdrawing ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlineIcon />}
+          >
+            取り下げる
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

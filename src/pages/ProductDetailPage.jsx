@@ -151,15 +151,24 @@ const ProductDetailPage = () => {
 
             {/* 情報 */}
             <Box sx={{ p: 3, flexGrow: 1 }}>
-              {product.category && (
-                <Chip
-                  label={product.category}
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                  sx={{ mb: 1 }}
-                />
-              )}
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
+                {product.category && (
+                  <Chip
+                    label={product.category}
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                  />
+                )}
+                {product.condition && (
+                  <Chip
+                    label={`状態: ${product.condition}`}
+                    color="default"
+                    variant="outlined"
+                    size="small"
+                  />
+                )}
+              </Box>
 
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                 {product.title}

@@ -32,6 +32,15 @@ const CATEGORIES = [
   "その他",
 ];
 
+const CONDITIONS = [
+  "新品・未使用",
+  "未使用に近い",
+  "目立った傷や汚れなし",
+  "やや傷や汚れあり",
+  "傷や汚れあり",
+  "全体的に状態が悪い",
+];
+
 const SellPage = () => {
   const { user } = useUser();
   const navigate = useNavigate();
@@ -40,6 +49,7 @@ const SellPage = () => {
     description: "",
     price: "",
     category: "",
+    condition: "",
     image_url: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -81,6 +91,7 @@ const SellPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title || !form.price) return setError("商品名と価格は必須です");
+    if (!form.condition) return setError("商品の状態を選択してください");
     setError("");
     setSubmitting(true);
     try {
@@ -90,6 +101,7 @@ const SellPage = () => {
           description: form.description || null,
           price: parseInt(form.price),
           category: form.category || null,
+          condition: form.condition || null,
           image_url: form.image_url || null,
         },
         user.email
@@ -141,6 +153,21 @@ const SellPage = () => {
               >
                 <MenuItem value=""><em>選択してください</em></MenuItem>
                 {CATEGORIES.map((c) => (
+                  <MenuItem key={c} value={c}>{c}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* 商品の状態 */}
+            <FormControl fullWidth required>
+              <InputLabel>商品の状態</InputLabel>
+              <Select
+                name="condition"
+                value={form.condition}
+                label="商品の状態"
+                onChange={handleChange}
+              >
+                {CONDITIONS.map((c) => (
                   <MenuItem key={c} value={c}>{c}</MenuItem>
                 ))}
               </Select>

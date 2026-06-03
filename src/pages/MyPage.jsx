@@ -30,7 +30,7 @@ import {
 } from "@mui/material";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 
 const MyPage = () => {
   const { user } = useUser();

@@ -17,8 +17,8 @@ export const deleteProduct = (productId, sellerEmail) =>
   client.delete(`/products/${productId}`, { params: { seller_email: sellerEmail } });
 
 // 自分の出品一覧
-export const getSellerProducts = (email) =>
-  client.get(`/products/seller/${email}`);
+export const getSellerProducts = (email, limit = 100) =>
+  client.get(`/products/seller/${email}`, { params: { limit } });
 
 // いいね済み確認
 export const getLikeStatus = (productId, userEmail) =>

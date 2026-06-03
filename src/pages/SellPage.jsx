@@ -78,7 +78,9 @@ const SellPage = () => {
       const res = await generateDescription(
         form.title,
         form.category || null,
-        form.price ? parseInt(form.price) : null
+        form.price ? parseInt(form.price) : null,
+        form.condition || null,
+        form.description || null
       );
       setForm({ ...form, description: res.data.description });
     } catch (e) {
@@ -205,11 +207,14 @@ const SellPage = () => {
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                placeholder="商品の状態や特徴を入力してください"
+                placeholder="強調したいポイントを箇条書きでもOK（例：購入1年・週1使用、付属品全部あり、目立つ傷なし）。「AIで自動生成」を押すと、この内容を踏まえた紹介文を作成します。"
                 multiline
                 rows={5}
                 fullWidth
               />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                ※ 伝えたいことを書いてから「AIで自動生成」を押すと、その意図を汲んだ説明文に置き換わります。
+              </Typography>
             </Box>
 
             <Divider />

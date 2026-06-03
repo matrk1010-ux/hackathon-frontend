@@ -350,9 +350,11 @@ const AiSetPage = () => {
                         ¥{product.price.toLocaleString()}
                       </Typography>
                     </Box>
-                    {product.category && (
+                    {(product.category || product.condition) && (
                       <Typography variant="caption" color="text.secondary" display="block">
                         {product.category}
+                        {product.category && product.condition && "　/　"}
+                        {product.condition && `状態: ${product.condition}`}
                       </Typography>
                     )}
                     {product.description && (

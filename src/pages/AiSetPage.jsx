@@ -38,7 +38,8 @@ const AiSetPage = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [budget, setBudget] = useState("");
+  const [minBudget, setMinBudget] = useState("");
+  const [maxBudget, setMaxBudget] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -56,8 +57,11 @@ const AiSetPage = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  const budgetInvalid =
+    minBudget !== "" && maxBudget !== "" && parseInt(maxBudget) < parseInt(minBudget);
+
   const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loading || budgetInvalid) return;
 
     const userMsg = { role: "user", content: input.trim() };
     const nextMessages = [...messages, userMsg];
@@ -67,7 +71,11 @@ const AiSetPage = () => {
     setBuyResult(null);
 
     try {
-      const res = await aiSetChat(nextMessages, budget ? parseInt(budget) : null);
+      const res = await aiSetChat(
+        nextMessages,
+        minBudget !== "" ? parseInt(minBudget) : null,
+        maxBudget !== "" ? parseInt(maxBudget) : null
+      );
       const { reply, suggested_products } = res.data;
       setMessages((prev) => [...prev, { role: "model", content: reply }]);
       setSuggestedProducts(suggested_products || []);
@@ -261,18 +269,38 @@ const AiSetPage = () => {
       {/* 入力エリア */}
       <Divider />
       <Box sx={{ p: 2, bgcolor: "background.paper", display: "flex", flexDirection: "column", gap: 1 }}>
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
           <TextField
             size="small"
-            label="予算（任意）"
+            label="下限（任意）"
             type="number"
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-            sx={{ width: 140 }}
+            value={minBudget}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "" || parseInt(v) >= 0) setMinBudget(v);
+            }}
+            sx={{ width: 130 }}
+            inputProps={{ min: 0 }}
             InputProps={{ startAdornment: <InputAdornment position="start">¥</InputAdornment> }}
           />
+          <Typography variant="body2" color="text.secondary">〜</Typography>
+          <TextField
+            size="small"
+            label="上限（任意）"
+            type="number"
+            value={maxBudget}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "" || parseInt(v) >= 0) setMaxBudget(v);
+            }}
+            sx={{ width: 130 }}
+            inputProps={{ min: 0 }}
+            InputProps={{ startAdornment: <InputAdornment position="start">¥</InputAdornment> }}
+            error={budgetInvalid}
+            helperText={budgetInvalid ? "上限は下限以上にしてください" : ""}
+          />
           <Typography variant="caption" color="text.secondary">
-            予算を設定するとその範囲内で提案します
+            予算の範囲を設定するとその範囲内で提案します
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
@@ -289,7 +317,7 @@ const AiSetPage = () => {
           <Button
             variant="contained"
             onClick={sendMessage}
-            disabled={loading || !input.trim()}
+            disabled={loading || !input.trim() || budgetInvalid}
             sx={{ minWidth: 56 }}
           >
             <SendIcon />

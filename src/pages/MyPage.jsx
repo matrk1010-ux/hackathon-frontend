@@ -156,19 +156,23 @@ const MyPage = () => {
                 ) : (
                   <Grid container spacing={2}>
                     {available.map((p) => (
-                      <Grid item xs={6} sm={4} md={3} key={p.id}>
-                        <ProductCard product={p} />
-                        <Button
-                          fullWidth
-                          size="small"
-                          color="error"
-                          variant="outlined"
-                          startIcon={<DeleteOutlineIcon />}
-                          onClick={() => setWithdrawTarget(p)}
-                          sx={{ mt: 0.5 }}
-                        >
-                          取り下げる
-                        </Button>
+                      <Grid item xs={6} sm={4} md={3} key={p.id} sx={{ display: "flex" }}>
+                        <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <ProductCard product={p} />
+                          </Box>
+                          <Button
+                            fullWidth
+                            size="small"
+                            color="error"
+                            variant="outlined"
+                            startIcon={<DeleteOutlineIcon />}
+                            onClick={() => setWithdrawTarget(p)}
+                            sx={{ mt: 0.5 }}
+                          >
+                            取り下げる
+                          </Button>
+                        </Box>
                       </Grid>
                     ))}
                   </Grid>

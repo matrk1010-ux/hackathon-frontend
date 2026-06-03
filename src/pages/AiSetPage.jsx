@@ -302,26 +302,45 @@ const AiSetPage = () => {
         <DialogTitle>購入内容の確認</DialogTitle>
         <DialogContent dividers>
           <List disablePadding>
-            {selectedProducts.map((product) => (
-              <ListItem key={product.id} disablePadding sx={{ py: 1 }}>
-                <ListItemAvatar>
-                  {product.image_url ? (
-                    <Avatar variant="rounded" src={product.image_url} sx={{ width: 56, height: 56, mr: 1 }} />
-                  ) : (
-                    <Avatar variant="rounded" sx={{ width: 56, height: 56, mr: 1, bgcolor: "grey.200" }}>
-                      <ImageNotSupportedIcon sx={{ color: "grey.400" }} />
-                    </Avatar>
-                  )}
-                </ListItemAvatar>
-                <ListItemText
-                  primary={product.title}
-                  secondary={product.category || ""}
-                  sx={{ ml: 1 }}
-                />
-                <Typography variant="body2" fontWeight={700} color="primary" sx={{ ml: 2, whiteSpace: "nowrap" }}>
-                  ¥{product.price.toLocaleString()}
-                </Typography>
-              </ListItem>
+            {selectedProducts.map((product, idx) => (
+              <React.Fragment key={product.id}>
+                <ListItem alignItems="flex-start" disablePadding sx={{ py: 1.5 }}>
+                  <ListItemAvatar>
+                    {product.image_url ? (
+                      <Avatar variant="rounded" src={product.image_url} sx={{ width: 64, height: 64, mr: 1 }} />
+                    ) : (
+                      <Avatar variant="rounded" sx={{ width: 64, height: 64, mr: 1, bgcolor: "grey.200" }}>
+                        <ImageNotSupportedIcon sx={{ color: "grey.400" }} />
+                      </Avatar>
+                    )}
+                  </ListItemAvatar>
+                  <Box sx={{ ml: 1, flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight={700}>
+                        {product.title}
+                      </Typography>
+                      <Typography variant="body2" fontWeight={700} color="primary" sx={{ whiteSpace: "nowrap" }}>
+                        ¥{product.price.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    {product.category && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {product.category}
+                      </Typography>
+                    )}
+                    {product.description && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 0.5, whiteSpace: "pre-wrap" }}
+                      >
+                        {product.description}
+                      </Typography>
+                    )}
+                  </Box>
+                </ListItem>
+                {idx < selectedProducts.length - 1 && <Divider component="li" />}
+              </React.Fragment>
             ))}
           </List>
           <Divider sx={{ my: 1.5 }} />

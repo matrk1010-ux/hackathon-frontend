@@ -39,6 +39,7 @@ const AiSetPage = () => {
   const [maxBudget, setMaxBudget] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestedProducts, setSuggestedProducts] = useState([]);
+  const [reasons, setReasons] = useState({});
   const [selectedIds, setSelectedIds] = useState([]);
   const [buying, setBuying] = useState(false);
   const [buyResult, setBuyResult] = useState(null);
@@ -73,9 +74,10 @@ const AiSetPage = () => {
         minBudget !== "" ? parseInt(minBudget) : null,
         maxBudget !== "" ? parseInt(maxBudget) : null
       );
-      const { reply, suggested_products } = res.data;
+      const { reply, suggested_products, reasons: reasonMap } = res.data;
       setMessages((prev) => [...prev, { role: "model", content: reply }]);
       setSuggestedProducts(suggested_products || []);
+      setReasons(reasonMap || {});
       setSelectedIds((suggested_products || []).map((p) => p.id));
     } catch (e) {
       setMessages((prev) => [
@@ -98,6 +100,7 @@ const AiSetPage = () => {
       const { purchased, failed, total_price } = res.data;
       setBuyResult({ purchased, failed, total_price });
       setSuggestedProducts([]);
+      setReasons({});
       setSelectedIds([]);
     } catch (e) {
       setBuyResult({ error: "購入に失敗しました" });
@@ -202,6 +205,26 @@ const AiSetPage = () => {
                         <Typography variant="body2" fontWeight={700} color="primary">
                           ¥{product.price.toLocaleString()}
                         </Typography>
+                        {reasons[product.id] && (
+                          <Box
+                            sx={{
+                              mt: 0.75,
+                              p: 0.75,
+                              bgcolor: "rgba(25,118,210,0.06)",
+                              borderRadius: 1,
+                              display: "flex",
+                              gap: 0.5,
+                              alignItems: "flex-start",
+                            }}
+                          >
+                            <AutoAwesomeIcon
+                              sx={{ fontSize: 14, color: "secondary.main", mt: "1px", flexShrink: 0 }}
+                            />
+                            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+                              {reasons[product.id]}
+                            </Typography>
+                          </Box>
+                        )}
                       </CardContent>
                     </CardActionArea>
                   </Card>

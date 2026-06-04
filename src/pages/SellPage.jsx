@@ -4,8 +4,6 @@ import { useUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
 import { createProduct } from "../api/products";
 import { generateDescription } from "../api/ai";
-import { fireStorage } from "../firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   Container,
   Box,
@@ -77,6 +75,34 @@ const SellPage = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // 画像をブラウザ上で縮小・JPEG圧縮して data URI に変換する
+  const compressImage = (file, maxSize = 800, quality = 0.7) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > height && width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          } else if (height >= width && height > maxSize) {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = reject;
+        img.src = ev.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const handleImageSelect = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = ""; // 同じファイルを再選択できるようにリセット
@@ -84,22 +110,18 @@ const SellPage = () => {
     if (!file.type.startsWith("image/")) {
       return setError("画像ファイルを選択してください");
     }
-    if (file.size > 5 * 1024 * 1024) {
-      return setError("画像は5MB以下にしてください");
+    if (file.size > 10 * 1024 * 1024) {
+      return setError("画像は10MB以下にしてください");
     }
     setError("");
     setUploading(true);
     try {
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-      const path = `product_images/${user.email}/${Date.now()}.${ext}`;
-      const storageRef = ref(fireStorage, path);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      setForm((f) => ({ ...f, image_url: url }));
-      toast("画像をアップロードしました", "success");
+      const dataUrl = await compressImage(file);
+      setForm((f) => ({ ...f, image_url: dataUrl }));
+      toast("画像を設定しました", "success");
     } catch (err) {
       console.error(err);
-      setError("画像のアップロードに失敗しました");
+      setError("画像の処理に失敗しました");
     } finally {
       setUploading(false);
     }
@@ -266,11 +288,11 @@ const SellPage = () => {
                 disabled={uploading}
                 sx={{ fontWeight: 600 }}
               >
-                {uploading ? "アップロード中..." : form.image_url ? "画像を変更" : "画像を選択"}
+                {uploading ? "処理中..." : form.image_url ? "画像を変更" : "画像を選択"}
                 <input type="file" accept="image/*" hidden onChange={handleImageSelect} />
               </Button>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                端末から画像を選んでアップロードできます（5MBまで）。未選択の場合はカテゴリ別の画像が表示されます。
+                端末から画像を選べます（自動で縮小・圧縮されます）。未選択の場合はカテゴリ別の画像が表示されます。
               </Typography>
             </Box>
 

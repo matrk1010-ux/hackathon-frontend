@@ -13,7 +13,3 @@ export const getMyPurchases = (buyerEmail) =>
 // まとめて購入
 export const bulkBuyProducts = (productIds, buyerEmail) =>
   client.post("/purchases/bulk", { product_ids: productIds, buyer_email: buyerEmail });
-
-// 【開発用】返品
-export const returnProduct = (purchaseId, buyerEmail) =>
-  client.delete(`/purchases/${purchaseId}/return`, { params: { buyer_email: buyerEmail } });

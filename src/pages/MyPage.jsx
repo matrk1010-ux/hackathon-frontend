@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { getSellerProducts, deleteProduct, getLikedProducts } from "../api/products";
-import { getMyPurchases, returnProduct } from "../api/purchases";
+import { getMyPurchases } from "../api/purchases";
 import ProductCard from "../components/ProductCard";
+import ProductGridSkeleton from "../components/ProductGridSkeleton";
+import EmptyState from "../components/EmptyState";
 import {
   Container,
   Box,
@@ -30,6 +32,8 @@ import {
 } from "@mui/material";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 
 const MyPage = () => {
@@ -135,28 +139,20 @@ const MyPage = () => {
 
         {/* コンテンツ */}
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress color="primary" />
-          </Box>
+          <ProductGridSkeleton count={4} />
         ) : (
           <Box>
             {/* 出品中 */}
             {tab === 0 && (
               <>
                 {available.length === 0 ? (
-                  <Box sx={{ textAlign: "center", py: 6 }}>
-                    <ShoppingBagIcon sx={{ fontSize: 64, color: "grey.300", mb: 2 }} />
-                    <Typography color="text.secondary" sx={{ mb: 3 }}>
-                      出品中の商品はありません
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<AddBoxIcon />}
-                      onClick={() => navigate("/sell")}
-                    >
-                      出品する
-                    </Button>
-                  </Box>
+                  <EmptyState
+                    icon={<ShoppingBagIcon sx={{ fontSize: 64 }} />}
+                    message="出品中の商品はありません"
+                    actionLabel="出品する"
+                    actionIcon={<AddBoxIcon />}
+                    onAction={() => navigate("/sell")}
+                  />
                 ) : (
                   <Grid container spacing={2}>
                     {available.map((p) => (
@@ -188,7 +184,10 @@ const MyPage = () => {
             {tab === 1 && (
               <>
                 {sold.length === 0 ? (
-                  <Alert severity="info" sx={{ borderRadius: 2 }}>売り切れた商品はありません</Alert>
+                  <EmptyState
+                    icon={<ShoppingBagIcon sx={{ fontSize: 64 }} />}
+                    message="売り切れた商品はありません"
+                  />
                 ) : (
                   <Grid container spacing={2}>
                     {sold.map((p) => (
@@ -205,7 +204,10 @@ const MyPage = () => {
             {tab === 2 && (
               <>
                 {likedProducts.length === 0 ? (
-                  <Alert severity="info" sx={{ borderRadius: 2 }}>いいねした商品はありません</Alert>
+                  <EmptyState
+                    icon={<FavoriteBorderIcon sx={{ fontSize: 64 }} />}
+                    message="いいねした商品はありません"
+                  />
                 ) : (
                   <Grid container spacing={2}>
                     {likedProducts.map((p) => (
@@ -222,26 +224,16 @@ const MyPage = () => {
             {tab === 3 && (
               <>
                 {purchases.length === 0 ? (
-                  <Alert severity="info" sx={{ borderRadius: 2 }}>購入履歴はありません</Alert>
+                  <EmptyState
+                    icon={<ReceiptLongIcon sx={{ fontSize: 64 }} />}
+                    message="購入履歴はありません"
+                  />
                 ) : (
                   <Paper elevation={1} sx={{ borderRadius: 2, overflow: "hidden" }}>
                     <List disablePadding>
                       {purchases.map((purchase, index) => (
                         <React.Fragment key={purchase.id}>
-                          <ListItem
-                            disablePadding
-                            secondaryAction={
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="error"
-                                onClick={() => returnProduct(purchase.id, user.email).then(fetchData)}
-                                sx={{ minWidth: 56 }}
-                              >
-                                返品
-                              </Button>
-                            }
-                          >
+                          <ListItem disablePadding>
                             <ListItemButton onClick={() => navigate(`/products/${purchase.product_id}`)}>
                               <ListItemText
                                 primary={purchase.product?.title || `商品ID: ${purchase.product_id}`}
@@ -252,7 +244,7 @@ const MyPage = () => {
                                 label={`¥${purchase.price.toLocaleString()}`}
                                 color="primary"
                                 size="small"
-                                sx={{ fontWeight: 700, mr: 9 }}
+                                sx={{ fontWeight: 700 }}
                               />
                             </ListItemButton>
                           </ListItem>

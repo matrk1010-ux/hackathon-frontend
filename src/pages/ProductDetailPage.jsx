@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
-import { getProduct, getLikeStatus, likeProduct, unlikeProduct, recordView } from "../api/products";
+import { getProduct, getLikeStatus, likeProduct, unlikeProduct, recordView, getProducts } from "../api/products";
 import { buyProduct } from "../api/purchases";
 import {
   Container,
@@ -10,9 +10,10 @@ import {
   Typography,
   Button,
   Chip,
-  CircularProgress,
+  Skeleton,
   Paper,
   Divider,
+  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -27,6 +28,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PersonIcon from "@mui/icons-material/Person";
 import ProductImage from "../components/ProductImage";
+import ProductCard from "../components/ProductCard";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -38,9 +40,10 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [related, setRelated] = useState([]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchProduct(); }, [id]);
+  useEffect(() => { setLoading(true); fetchProduct(); }, [id]);
 
   useEffect(() => {
     if (user?.email && product) {
@@ -49,6 +52,20 @@ const ProductDetailPage = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, product]);
+
+  // 同じカテゴリの関連商品を取得
+  useEffect(() => {
+    if (!product?.category) return setRelated([]);
+    getProducts({ category: product.category, limit: 12 })
+      .then((res) => {
+        const items = res.data
+          .filter((p) => p.id !== product.id && p.status === "available")
+          .slice(0, 4);
+        setRelated(items);
+      })
+      .catch(() => setRelated([]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
 
   const fetchProduct = async () => {
     try {
@@ -100,8 +117,27 @@ const ProductDetailPage = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
-        <CircularProgress color="primary" />
+      <Box sx={{ bgcolor: "grey.50", minHeight: "100vh", py: 3 }}>
+        <Container maxWidth="md">
+          <Skeleton width={80} height={40} sx={{ mb: 2 }} />
+          <Paper elevation={2} sx={{ borderRadius: 3, overflow: "hidden" }}>
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" } }}>
+              <Skeleton
+                variant="rectangular"
+                sx={{ width: { xs: "100%", md: "45%" }, minHeight: { xs: 280, md: 360 } }}
+              />
+              <Box sx={{ p: 3, flexGrow: 1 }}>
+                <Skeleton width={120} height={32} sx={{ mb: 1 }} />
+                <Skeleton width="80%" height={40} />
+                <Skeleton width="40%" height={48} sx={{ mb: 2 }} />
+                <Skeleton variant="rectangular" height={44} sx={{ borderRadius: 1, mb: 3 }} />
+                <Skeleton width="100%" />
+                <Skeleton width="95%" />
+                <Skeleton width="70%" />
+              </Box>
+            </Box>
+          </Paper>
+        </Container>
       </Box>
     );
   }
@@ -235,6 +271,22 @@ const ProductDetailPage = () => {
             </Box>
           </Box>
         </Paper>
+
+        {/* 関連商品 */}
+        {related.length > 0 && (
+          <Box sx={{ mt: 5 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+              関連商品
+            </Typography>
+            <Grid container spacing={2}>
+              {related.map((p) => (
+                <Grid item xs={6} sm={4} md={3} key={p.id}>
+                  <ProductCard product={p} />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
       </Container>
 
       {/* 購入確認ダイアログ */}

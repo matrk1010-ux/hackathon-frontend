@@ -6,6 +6,8 @@ import { useToast } from "../context/ToastContext";
 import { getProducts } from "../api/products";
 import { getRecommendations } from "../api/recommendations";
 import ProductCard from "../components/ProductCard";
+import ProductGridSkeleton from "../components/ProductGridSkeleton";
+import EmptyState from "../components/EmptyState";
 import {
   Container,
   Box,
@@ -14,14 +16,12 @@ import {
   Button,
   Grid,
   Paper,
-  Skeleton,
-  Card,
   InputAdornment,
   IconButton,
-  Alert,
   Chip,
   Stack,
 } from "@mui/material";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import GoogleIcon from "@mui/icons-material/Google";
@@ -228,24 +228,12 @@ const HomePage = () => {
           </Typography>
 
           {loading ? (
-            <Grid container spacing={2}>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Grid item xs={6} sm={4} md={3} key={i}>
-                  <Card sx={{ borderRadius: 2 }} elevation={2}>
-                    <Skeleton variant="rectangular" height={180} />
-                    <Box sx={{ p: 1.5 }}>
-                      <Skeleton width="90%" />
-                      <Skeleton width="50%" />
-                      <Skeleton width="40%" height={28} sx={{ mt: 1 }} />
-                    </Box>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+            <ProductGridSkeleton count={8} />
           ) : products.length === 0 ? (
-            <Alert severity="info" sx={{ borderRadius: 2 }}>
-              商品が見つかりませんでした
-            </Alert>
+            <EmptyState
+              icon={<SearchOffIcon sx={{ fontSize: 64 }} />}
+              message="商品が見つかりませんでした"
+            />
           ) : (
             <Grid container spacing={2}>
               {products.map((p) => (

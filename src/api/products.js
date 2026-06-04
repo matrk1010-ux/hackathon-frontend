@@ -20,6 +20,10 @@ export const deleteProduct = (productId, sellerEmail) =>
 export const getSellerProducts = (email, limit = 100) =>
   client.get(`/products/seller/${email}`, { params: { limit } });
 
+// いいねした商品一覧
+export const getLikedProducts = (userEmail, limit = 100) =>
+  client.get(`/products/liked/${userEmail}`, { params: { limit } });
+
 // いいね済み確認
 export const getLikeStatus = (productId, userEmail) =>
   client.get(`/products/${productId}/like`, { params: { user_email: userEmail } });

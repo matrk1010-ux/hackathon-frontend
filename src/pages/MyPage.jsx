@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import { getSellerProducts, deleteProduct } from "../api/products";
+import { getSellerProducts, deleteProduct, getLikedProducts } from "../api/products";
 import { getMyPurchases, returnProduct } from "../api/purchases";
 import ProductCard from "../components/ProductCard";
 import {
@@ -38,6 +38,7 @@ const MyPage = () => {
   const [tab, setTab] = useState(0);
   const [sellingProducts, setSellingProducts] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [likedProducts, setLikedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [withdrawTarget, setWithdrawTarget] = useState(null);
   const [withdrawing, setWithdrawing] = useState(false);
@@ -48,12 +49,14 @@ const MyPage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [sellRes, buyRes] = await Promise.all([
+      const [sellRes, buyRes, likedRes] = await Promise.all([
         getSellerProducts(user.email),
         getMyPurchases(user.email),
+        getLikedProducts(user.email),
       ]);
       setSellingProducts(sellRes.data);
       setPurchases(buyRes.data);
+      setLikedProducts(likedRes.data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -125,6 +128,7 @@ const MyPage = () => {
           >
             <Tab label={`出品中 (${available.length})`} />
             <Tab label={`売り切れ (${sold.length})`} />
+            <Tab label={`いいね (${likedProducts.length})`} />
             <Tab label={`購入履歴 (${purchases.length})`} />
           </Tabs>
         </Paper>
@@ -197,8 +201,25 @@ const MyPage = () => {
               </>
             )}
 
-            {/* 購入履歴 */}
+            {/* いいね */}
             {tab === 2 && (
+              <>
+                {likedProducts.length === 0 ? (
+                  <Alert severity="info" sx={{ borderRadius: 2 }}>いいねした商品はありません</Alert>
+                ) : (
+                  <Grid container spacing={2}>
+                    {likedProducts.map((p) => (
+                      <Grid item xs={6} sm={4} md={3} key={p.id}>
+                        <ProductCard product={p} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+              </>
+            )}
+
+            {/* 購入履歴 */}
+            {tab === 3 && (
               <>
                 {purchases.length === 0 ? (
                   <Alert severity="info" sx={{ borderRadius: 2 }}>購入履歴はありません</Alert>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import { useToast } from "../context/ToastContext";
 import { getProduct, getLikeStatus, likeProduct, unlikeProduct, recordView } from "../api/products";
 import { buyProduct } from "../api/purchases";
 import {
@@ -25,11 +26,12 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PersonIcon from "@mui/icons-material/Person";
-import ImageNotSupportedIcon from "@mui/icons-material/ImageNotSupported";
+import ProductImage from "../components/ProductImage";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
   const { user } = useUser();
+  const toast = useToast();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [liked, setLiked] = useState(false);
@@ -53,7 +55,7 @@ const ProductDetailPage = () => {
       const res = await getProduct(id);
       setProduct(res.data);
     } catch (e) {
-      alert("商品が見つかりません");
+      toast("商品が見つかりません", "error");
       navigate("/");
     } finally {
       setLoading(false);
@@ -68,7 +70,7 @@ const ProductDetailPage = () => {
   };
 
   const handleLike = async () => {
-    if (!user) return alert("ログインが必要です");
+    if (!user) return toast("ログインが必要です", "warning");
     try {
       if (liked) {
         await unlikeProduct(product.id, user.email);
@@ -78,7 +80,7 @@ const ProductDetailPage = () => {
         setLiked(true);
       }
     } catch (e) {
-      alert("操作に失敗しました");
+      toast("操作に失敗しました", "error");
     }
   };
 
@@ -87,10 +89,10 @@ const ProductDetailPage = () => {
     setBuying(true);
     try {
       await buyProduct(product.id, user.email);
-      alert("購入が完了しました！");
+      toast("購入が完了しました！", "success");
       navigate("/mypage");
     } catch (e) {
-      alert(e.response?.data?.detail || "購入に失敗しました");
+      toast(e.response?.data?.detail || "購入に失敗しました", "error");
     } finally {
       setBuying(false);
     }
@@ -126,27 +128,12 @@ const ProductDetailPage = () => {
             <Box
               sx={{
                 width: { xs: "100%", md: "45%" },
-                minHeight: 300,
-                bgcolor: "grey.100",
+                minHeight: { xs: 280, md: 360 },
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 flexShrink: 0,
               }}
             >
-              {product.image_url ? (
-                <Box
-                  component="img"
-                  src={product.image_url}
-                  alt={product.title}
-                  sx={{ width: "100%", height: { xs: 260, md: "100%" }, objectFit: "cover" }}
-                />
-              ) : (
-                <Box sx={{ textAlign: "center", color: "grey.400" }}>
-                  <ImageNotSupportedIcon sx={{ fontSize: 72 }} />
-                  <Typography variant="body2">画像なし</Typography>
-                </Box>
-              )}
+              <ProductImage product={product} height="100%" emojiSize={96} />
             </Box>
 
             {/* 情報 */}
@@ -202,7 +189,7 @@ const ProductDetailPage = () => {
                     color="primary"
                     startIcon={<ShoppingCartIcon />}
                     onClick={() => {
-                      if (!user) return alert("ログインが必要です");
+                      if (!user) return toast("ログインが必要です", "warning");
                       setConfirmOpen(true);
                     }}
                     disabled={buying}

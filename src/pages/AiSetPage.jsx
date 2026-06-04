@@ -8,7 +8,6 @@ import {
   Paper,
   Card,
   CardContent,
-  CardMedia,
   CardActionArea,
   CircularProgress,
   InputAdornment,
@@ -21,13 +20,12 @@ import {
   List,
   ListItem,
   ListItemAvatar,
-  Avatar,
   Checkbox,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SendIcon from "@mui/icons-material/Send";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
-import ImageNotSupportedIcon from "@mui/icons-material/ImageNotSupported";
+import ProductImage from "../components/ProductImage";
 import { useUser } from "../context/UserContext";
 import { aiSetChat } from "../api/ai_set";
 import { bulkBuyProducts } from "../api/purchases";
@@ -197,13 +195,8 @@ const AiSetPage = () => {
                       }}
                     />
                     <CardActionArea onClick={() => navigate(`/products/${product.id}`)}>
-                      {product.image_url ? (
-                        <CardMedia component="img" height="100" image={product.image_url} alt={product.title} sx={{ objectFit: "cover" }} />
-                      ) : (
-                        <Box sx={{ height: 100, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "grey.100" }}>
-                          <ImageNotSupportedIcon sx={{ color: "grey.400" }} />
-                        </Box>
-                      )}
+                      <ProductImage product={product} height={100} emojiSize={36} />
+
                       <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
                         <Typography variant="caption" noWrap display="block">{product.title}</Typography>
                         <Typography variant="body2" fontWeight={700} color="primary">
@@ -333,13 +326,9 @@ const AiSetPage = () => {
               <React.Fragment key={product.id}>
                 <ListItem alignItems="flex-start" disablePadding sx={{ py: 1.5 }}>
                   <ListItemAvatar>
-                    {product.image_url ? (
-                      <Avatar variant="rounded" src={product.image_url} sx={{ width: 64, height: 64, mr: 1 }} />
-                    ) : (
-                      <Avatar variant="rounded" sx={{ width: 64, height: 64, mr: 1, bgcolor: "grey.200" }}>
-                        <ImageNotSupportedIcon sx={{ color: "grey.400" }} />
-                      </Avatar>
-                    )}
+                    <Box sx={{ width: 64, height: 64, mr: 1, borderRadius: 1, overflow: "hidden" }}>
+                      <ProductImage product={product} height={64} emojiSize={26} />
+                    </Box>
                   </ListItemAvatar>
                   <Box sx={{ ml: 1, flex: 1, minWidth: 0 }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 1 }}>

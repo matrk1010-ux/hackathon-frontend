@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import { useToast } from "../context/ToastContext";
 import { createProduct } from "../api/products";
 import { generateDescription } from "../api/ai";
 import {
@@ -43,6 +44,7 @@ const CONDITIONS = [
 
 const SellPage = () => {
   const { user } = useUser();
+  const toast = useToast();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     title: "",
@@ -108,7 +110,7 @@ const SellPage = () => {
         },
         user.email
       );
-      alert("出品しました！");
+      toast("出品しました！", "success");
       navigate("/");
     } catch (e) {
       setError(e.response?.data?.detail || "出品に失敗しました");

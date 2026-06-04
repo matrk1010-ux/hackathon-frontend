@@ -3,48 +3,52 @@ import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardActionArea,
-  CardMedia,
   CardContent,
   Typography,
   Chip,
   Box,
+  Stack,
 } from "@mui/material";
-import ImageNotSupportedIcon from "@mui/icons-material/ImageNotSupported";
+import ProductImage from "./ProductImage";
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
+  const isSold = product.status === "sold";
 
   return (
     <Card
-      sx={{ height: "100%", display: "flex", flexDirection: "column", borderRadius: 2 }}
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 2,
+        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+        "&:hover": { transform: "translateY(-4px)", boxShadow: 6 },
+      }}
       elevation={2}
     >
       <CardActionArea
         onClick={() => navigate(`/products/${product.id}`)}
         sx={{ flexGrow: 1, display: "flex", flexDirection: "column", alignItems: "stretch" }}
       >
-        {/* 画像 */}
-        {product.image_url ? (
-          <CardMedia
-            component="img"
-            image={product.image_url}
-            alt={product.title}
-            sx={{ height: 180, objectFit: "cover" }}
-          />
-        ) : (
-          <Box
-            sx={{
-              height: 180,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "grey.100",
-              color: "grey.400",
-            }}
-          >
-            <ImageNotSupportedIcon sx={{ fontSize: 48 }} />
-          </Box>
-        )}
+        {/* 画像（無い場合はカテゴリ別プレースホルダー） */}
+        <Box sx={{ position: "relative" }}>
+          <ProductImage product={product} height={180} />
+          {isSold && (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                bgcolor: "rgba(0,0,0,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Chip label="SOLD" color="default" sx={{ bgcolor: "white", fontWeight: 700 }} />
+            </Box>
+          )}
+        </Box>
 
         {/* 情報 */}
         <CardContent sx={{ flexGrow: 1, pb: "12px !important" }}>
@@ -62,15 +66,25 @@ const ProductCard = ({ product }) => {
           >
             {product.title}
           </Typography>
-          {product.category && (
-            <Chip
-              label={product.category}
-              size="small"
-              color="primary"
-              variant="outlined"
-              sx={{ mb: 1, fontSize: "0.7rem" }}
-            />
-          )}
+          <Stack direction="row" spacing={0.5} sx={{ mb: 1, flexWrap: "wrap", gap: 0.5 }}>
+            {product.category && (
+              <Chip
+                label={product.category}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontSize: "0.7rem" }}
+              />
+            )}
+            {product.condition && (
+              <Chip
+                label={product.condition}
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: "0.7rem", color: "text.secondary", borderColor: "grey.300" }}
+              />
+            )}
+          </Stack>
           <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 700 }}>
             ¥{product.price.toLocaleString()}
           </Typography>

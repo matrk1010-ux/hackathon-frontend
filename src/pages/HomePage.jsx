@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { fireAuth } from "../firebase";
 import { useUser } from "../context/UserContext";
+import { useToast } from "../context/ToastContext";
 import { getProducts } from "../api/products";
 import { getRecommendations } from "../api/recommendations";
 import ProductCard from "../components/ProductCard";
@@ -13,26 +14,42 @@ import {
   Button,
   Grid,
   Paper,
-  CircularProgress,
+  Skeleton,
+  Card,
   InputAdornment,
   IconButton,
   Alert,
+  Chip,
+  Stack,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import GoogleIcon from "@mui/icons-material/Google";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
+const CATEGORIES = [
+  "服・ファッション",
+  "本・漫画",
+  "家電・スマホ",
+  "スポーツ",
+  "おもちゃ",
+  "家具・インテリア",
+  "コスメ・美容",
+  "その他",
+];
+
 const HomePage = () => {
   const { user } = useUser();
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [keyword, setKeyword] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(true);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchProducts(); }, [keyword]);
+  useEffect(() => { fetchProducts(); }, [keyword, category]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user?.email) fetchRecommendations(); }, [user]);
@@ -42,6 +59,7 @@ const HomePage = () => {
     try {
       const params = { limit: 20 };
       if (keyword) params.keyword = keyword;
+      if (category) params.category = category;
       const res = await getProducts(params);
       setProducts(res.data);
     } catch (e) {
@@ -74,8 +92,9 @@ const HomePage = () => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(fireAuth, provider);
+      toast("ログインしました", "success");
     } catch (e) {
-      alert("ログインに失敗しました");
+      toast("ログインに失敗しました", "error");
     }
   };
 
@@ -152,6 +171,37 @@ const HomePage = () => {
           </Button>
         </Box>
 
+        {/* カテゴリ絞り込み */}
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            mb: 4,
+            overflowX: "auto",
+            pb: 1,
+            "&::-webkit-scrollbar": { height: 6 },
+            "&::-webkit-scrollbar-thumb": { bgcolor: "grey.300", borderRadius: 3 },
+          }}
+        >
+          <Chip
+            label="すべて"
+            color={category === "" ? "primary" : "default"}
+            variant={category === "" ? "filled" : "outlined"}
+            onClick={() => setCategory("")}
+            sx={{ fontWeight: 600, flexShrink: 0 }}
+          />
+          {CATEGORIES.map((cat) => (
+            <Chip
+              key={cat}
+              label={cat}
+              color={category === cat ? "primary" : "default"}
+              variant={category === cat ? "filled" : "outlined"}
+              onClick={() => setCategory(cat)}
+              sx={{ fontWeight: 600, flexShrink: 0 }}
+            />
+          ))}
+        </Stack>
+
         {/* レコメンド */}
         {user && recommendations.length > 0 && !keyword && (
           <Box sx={{ mb: 5 }}>
@@ -174,13 +224,24 @@ const HomePage = () => {
         {/* 商品一覧 */}
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-            {keyword ? `「${keyword}」の検索結果` : "新着商品"}
+            {keyword ? `「${keyword}」の検索結果` : category ? category : "新着商品"}
           </Typography>
 
           {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress color="primary" />
-            </Box>
+            <Grid container spacing={2}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Grid item xs={6} sm={4} md={3} key={i}>
+                  <Card sx={{ borderRadius: 2 }} elevation={2}>
+                    <Skeleton variant="rectangular" height={180} />
+                    <Box sx={{ p: 1.5 }}>
+                      <Skeleton width="90%" />
+                      <Skeleton width="50%" />
+                      <Skeleton width="40%" height={28} sx={{ mt: 1 }} />
+                    </Box>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
           ) : products.length === 0 ? (
             <Alert severity="info" sx={{ borderRadius: 2 }}>
               商品が見つかりませんでした

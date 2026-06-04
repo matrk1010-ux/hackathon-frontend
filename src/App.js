@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
+import { ToastProvider } from "./context/ToastContext";
 import { createTheme, ThemeProvider, CssBaseline } from "@mui/material";
 import Header from "./components/Header";
 import HomePage from "./pages/HomePage";
@@ -37,16 +38,18 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <UserProvider>
-        <BrowserRouter>
-          <Header />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/products/:id" element={<ProductDetailPage />} />
-            <Route path="/sell" element={<SellPage />} />
-            <Route path="/mypage" element={<MyPage />} />
-            <Route path="/ai-set" element={<AiSetPage />} />
-          </Routes>
-        </BrowserRouter>
+        <ToastProvider>
+          <BrowserRouter>
+            <Header />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/products/:id" element={<ProductDetailPage />} />
+              <Route path="/sell" element={<SellPage />} />
+              <Route path="/mypage" element={<MyPage />} />
+              <Route path="/ai-set" element={<AiSetPage />} />
+            </Routes>
+          </BrowserRouter>
+        </ToastProvider>
       </UserProvider>
     </ThemeProvider>
   );

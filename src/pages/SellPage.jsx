@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
 import { createProduct } from "../api/products";
-import { generateDescription } from "../api/ai";
+import { generateDescription, analyzeImage } from "../api/ai";
 import {
   Container,
   Box,
@@ -14,6 +14,7 @@ import {
   Select,
   FormControl,
   InputLabel,
+  FormHelperText,
   Paper,
   Divider,
   Alert,
@@ -59,6 +60,8 @@ const SellPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiFilled, setAiFilled] = useState({}); // 画像AIが埋めた欄の目印
   const [error, setError] = useState("");
 
   if (!user) {
@@ -72,7 +75,39 @@ const SellPage = () => {
   }
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    // ユーザーが手で編集したらAI入力の目印を外す
+    if (aiFilled[name]) setAiFilled((prev) => ({ ...prev, [name]: false }));
+  };
+
+  // 画像をGeminiで解析し、商品名・カテゴリ・状態を埋める（説明欄には触れない）
+  const handleAnalyzeImage = async () => {
+    if (!form.image_url) return setError("先に商品画像を選択してください");
+    setError("");
+    setAnalyzing(true);
+    try {
+      const res = await analyzeImage(form.image_url);
+      const { title, category, condition } = res.data;
+      const filled = {};
+      setForm((f) => {
+        const next = { ...f };
+        if (title) { next.title = title; filled.title = true; }
+        if (category) { next.category = category; filled.category = true; }
+        if (condition) { next.condition = condition; filled.condition = true; }
+        return next;
+      });
+      setAiFilled((prev) => ({ ...prev, ...filled }));
+      if (Object.keys(filled).length > 0) {
+        toast("AIが写真から入力しました。内容を確認してください", "success");
+      } else {
+        toast("写真から情報を読み取れませんでした", "warning");
+      }
+    } catch (e) {
+      setError("画像の解析に失敗しました");
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   // 画像をブラウザ上で縮小・JPEG圧縮して data URI に変換する
@@ -199,6 +234,8 @@ const SellPage = () => {
               placeholder="例：ナイキのスニーカー 27cm"
               required
               fullWidth
+              helperText={aiFilled.title ? "AIが写真から入力（編集できます）" : ""}
+              FormHelperTextProps={{ sx: { color: "secondary.main" } }}
             />
 
             {/* カテゴリ */}
@@ -215,6 +252,11 @@ const SellPage = () => {
                   <MenuItem key={c} value={c}>{c}</MenuItem>
                 ))}
               </Select>
+              {aiFilled.category && (
+                <FormHelperText sx={{ color: "secondary.main" }}>
+                  AIが写真から入力（変更できます）
+                </FormHelperText>
+              )}
             </FormControl>
 
             {/* 商品の状態 */}
@@ -230,6 +272,11 @@ const SellPage = () => {
                   <MenuItem key={c} value={c}>{c}</MenuItem>
                 ))}
               </Select>
+              {aiFilled.condition && (
+                <FormHelperText sx={{ color: "secondary.main" }}>
+                  AIが写真から推定（変更できます）
+                </FormHelperText>
+              )}
             </FormControl>
 
             {/* 価格 */}
@@ -298,23 +345,41 @@ const SellPage = () => {
 
             {/* 画像プレビュー */}
             {form.image_url && (
-              <Box sx={{ position: "relative", width: "100%" }}>
-                <Box
-                  component="img"
-                  src={form.image_url}
-                  alt="プレビュー"
-                  sx={{ width: "100%", maxHeight: 240, objectFit: "contain", borderRadius: 2, border: "1px solid #eee" }}
-                />
+              <Box>
+                <Box sx={{ position: "relative", width: "100%" }}>
+                  <Box
+                    component="img"
+                    src={form.image_url}
+                    alt="プレビュー"
+                    sx={{ width: "100%", maxHeight: 240, objectFit: "contain", borderRadius: 2, border: "1px solid #eee" }}
+                  />
+                  <Button
+                    size="small"
+                    color="error"
+                    variant="contained"
+                    startIcon={<DeleteOutlineIcon />}
+                    onClick={() => setForm((f) => ({ ...f, image_url: "" }))}
+                    sx={{ position: "absolute", top: 8, right: 8 }}
+                  >
+                    削除
+                  </Button>
+                </Box>
+
+                {/* 画像からAIで入力 */}
                 <Button
-                  size="small"
-                  color="error"
+                  fullWidth
                   variant="contained"
-                  startIcon={<DeleteOutlineIcon />}
-                  onClick={() => setForm((f) => ({ ...f, image_url: "" }))}
-                  sx={{ position: "absolute", top: 8, right: 8 }}
+                  color="secondary"
+                  startIcon={analyzing ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />}
+                  onClick={handleAnalyzeImage}
+                  disabled={analyzing || uploading}
+                  sx={{ mt: 1.5, fontWeight: 700 }}
                 >
-                  削除
+                  {analyzing ? "AIが読み取り中..." : "この写真からAIで入力"}
                 </Button>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                  写真から商品名・カテゴリ・状態を自動入力します（説明文はそのまま、強調メモ欄として使えます）。
+                </Typography>
               </Box>
             )}
 

@@ -4,6 +4,8 @@ import { useUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
 import { createProduct } from "../api/products";
 import { generateDescription } from "../api/ai";
+import { fireStorage } from "../firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   Container,
   Box,
@@ -21,6 +23,8 @@ import {
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SellIcon from "@mui/icons-material/Sell";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 
 const CATEGORIES = [
   "服・ファッション",
@@ -56,6 +60,7 @@ const SellPage = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
   if (!user) {
@@ -70,6 +75,34 @@ const SellPage = () => {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // 同じファイルを再選択できるようにリセット
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      return setError("画像ファイルを選択してください");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return setError("画像は5MB以下にしてください");
+    }
+    setError("");
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `product_images/${user.email}/${Date.now()}.${ext}`;
+      const storageRef = ref(fireStorage, path);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setForm((f) => ({ ...f, image_url: url }));
+      toast("画像をアップロードしました", "success");
+    } catch (err) {
+      console.error(err);
+      setError("画像のアップロードに失敗しました");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleGenerateDescription = async () => {
@@ -221,25 +254,46 @@ const SellPage = () => {
 
             <Divider />
 
-            {/* 画像URL */}
-            <TextField
-              label="画像URL"
-              name="image_url"
-              type="url"
-              value={form.image_url}
-              onChange={handleChange}
-              placeholder="https://..."
-              fullWidth
-            />
+            {/* 画像アップロード */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                商品画像
+              </Typography>
+              <Button
+                component="label"
+                variant="outlined"
+                startIcon={uploading ? <CircularProgress size={18} color="inherit" /> : <PhotoCameraIcon />}
+                disabled={uploading}
+                sx={{ fontWeight: 600 }}
+              >
+                {uploading ? "アップロード中..." : form.image_url ? "画像を変更" : "画像を選択"}
+                <input type="file" accept="image/*" hidden onChange={handleImageSelect} />
+              </Button>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                端末から画像を選んでアップロードできます（5MBまで）。未選択の場合はカテゴリ別の画像が表示されます。
+              </Typography>
+            </Box>
 
             {/* 画像プレビュー */}
             {form.image_url && (
-              <Box
-                component="img"
-                src={form.image_url}
-                alt="プレビュー"
-                sx={{ width: "100%", maxHeight: 200, objectFit: "contain", borderRadius: 2, border: "1px solid #eee" }}
-              />
+              <Box sx={{ position: "relative", width: "100%" }}>
+                <Box
+                  component="img"
+                  src={form.image_url}
+                  alt="プレビュー"
+                  sx={{ width: "100%", maxHeight: 240, objectFit: "contain", borderRadius: 2, border: "1px solid #eee" }}
+                />
+                <Button
+                  size="small"
+                  color="error"
+                  variant="contained"
+                  startIcon={<DeleteOutlineIcon />}
+                  onClick={() => setForm((f) => ({ ...f, image_url: "" }))}
+                  sx={{ position: "absolute", top: 8, right: 8 }}
+                >
+                  削除
+                </Button>
+              </Box>
             )}
 
             {/* 出品ボタン */}
@@ -248,7 +302,7 @@ const SellPage = () => {
               variant="contained"
               color="primary"
               size="large"
-              disabled={submitting}
+              disabled={submitting || uploading}
               sx={{ fontWeight: 700, py: 1.5 }}
             >
               {submitting ? <CircularProgress size={22} color="inherit" /> : "出品する"}

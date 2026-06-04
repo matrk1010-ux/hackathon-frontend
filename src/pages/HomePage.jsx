@@ -52,7 +52,7 @@ const HomePage = () => {
   useEffect(() => { fetchProducts(); }, [keyword, category]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (user?.email) fetchRecommendations(); }, [user]);
+  useEffect(() => { if (user?.email) fetchRecommendations(); }, [user, category]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -71,7 +71,7 @@ const HomePage = () => {
 
   const fetchRecommendations = async () => {
     try {
-      const res = await getRecommendations(user.email);
+      const res = await getRecommendations(user.email, 10, category || null);
       setRecommendations(res.data);
     } catch (e) {
       console.error(e);
@@ -208,7 +208,7 @@ const HomePage = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <AutoAwesomeIcon color="primary" />
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                あなたへのおすすめ
+                {category ? `あなたへのおすすめ・${category}` : "あなたへのおすすめ"}
               </Typography>
             </Box>
             <Grid container spacing={2}>

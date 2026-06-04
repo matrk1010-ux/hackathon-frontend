@@ -2,8 +2,9 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
-import { createTheme, ThemeProvider, CssBaseline } from "@mui/material";
+import { createTheme, ThemeProvider, CssBaseline, Box } from "@mui/material";
 import Header from "./components/Header";
+import BottomNav from "./components/BottomNav";
 import HomePage from "./pages/HomePage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import SellPage from "./pages/SellPage";
@@ -48,6 +49,9 @@ function App() {
               <Route path="/mypage" element={<MyPage />} />
               <Route path="/ai-set" element={<AiSetPage />} />
             </Routes>
+            {/* モバイルのボトムナビ分の余白 */}
+            <Box sx={{ height: { xs: 56, sm: 0 } }} />
+            <BottomNav />
           </BrowserRouter>
         </ToastProvider>
       </UserProvider>

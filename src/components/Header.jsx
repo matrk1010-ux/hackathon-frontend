@@ -15,6 +15,8 @@ import {
   IconButton,
   Divider,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -23,6 +25,8 @@ const Header = () => {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const handleLogout = async () => {
     setAnchorEl(null);
@@ -35,39 +39,62 @@ const Header = () => {
     <AppBar position="sticky" color="primary" elevation={2}>
       <Toolbar sx={{ gap: 1 }}>
         {/* ロゴ */}
-        <StorefrontIcon sx={{ mr: 1 }} />
-        <Typography
-          variant="h6"
+        <Box
           component={Link}
           to="/"
-          sx={{ flexGrow: 1, color: "inherit", textDecoration: "none", fontWeight: 700 }}
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            color: "inherit",
+            textDecoration: "none",
+          }}
         >
-          フリマアプリ
-        </Typography>
+          <StorefrontIcon />
+          <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 800, letterSpacing: ".04em", lineHeight: 1.1 }}
+            >
+              Emporio
+            </Typography>
+            {!isMobile && (
+              <Typography
+                variant="caption"
+                sx={{ opacity: 0.85, lineHeight: 1, fontSize: ".62rem", letterSpacing: ".18em" }}
+              >
+                エンボリオ
+              </Typography>
+            )}
+          </Box>
+        </Box>
 
         {user ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {/* AIセットボタン */}
-            <Button
-              color="inherit"
-              startIcon={<AutoAwesomeIcon />}
-              component={Link}
-              to="/ai-set"
-              sx={{ fontWeight: 600 }}
-            >
-              AIセット
-            </Button>
-
-            {/* 出品ボタン */}
-            <Button
-              color="inherit"
-              startIcon={<AddBoxIcon />}
-              component={Link}
-              to="/sell"
-              sx={{ fontWeight: 600 }}
-            >
-              出品する
-            </Button>
+            {/* AIセット・出品ボタン（モバイルでは下部ナビに集約） */}
+            {!isMobile && (
+              <>
+                <Button
+                  color="inherit"
+                  startIcon={<AutoAwesomeIcon />}
+                  component={Link}
+                  to="/ai-set"
+                  sx={{ fontWeight: 600 }}
+                >
+                  AIセット
+                </Button>
+                <Button
+                  color="inherit"
+                  startIcon={<AddBoxIcon />}
+                  component={Link}
+                  to="/sell"
+                  sx={{ fontWeight: 600 }}
+                >
+                  出品する
+                </Button>
+              </>
+            )}
 
             {/* アバター → マイページメニュー */}
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0.5 }}>

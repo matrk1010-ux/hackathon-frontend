@@ -20,6 +20,7 @@ import {
   List,
   ListItem,
   ListItemAvatar,
+  Chip,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SendIcon from "@mui/icons-material/Send";
@@ -161,12 +162,36 @@ const AiSetPage = () => {
             </Typography>
 
             {plans.map((plan, pi) => (
-              <Paper key={pi} variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Paper
+                key={pi}
+                variant="outlined"
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2,
+                  ...(plan.recommended && {
+                    borderColor: "primary.main",
+                    borderWidth: 2,
+                    boxShadow: "0 2px 10px rgba(255,107,53,0.15)",
+                  }),
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
                   <AutoAwesomeIcon color="secondary" fontSize="small" />
                   <Typography variant="subtitle2" fontWeight={700}>
                     {plan.title}
                   </Typography>
+                  {plan.recommended && (
+                    <Chip label="おすすめ" color="primary" size="small" sx={{ height: 20, fontWeight: 700 }} />
+                  )}
+                  {plan.label && (
+                    <Chip
+                      label={plan.label}
+                      color="secondary"
+                      variant="outlined"
+                      size="small"
+                      sx={{ height: 20 }}
+                    />
+                  )}
                   <Box sx={{ flex: 1 }} />
                   <Typography variant="body2" color="text.secondary">
                     {plan.products.length}点 / <strong>¥{plan.total_price.toLocaleString()}</strong>

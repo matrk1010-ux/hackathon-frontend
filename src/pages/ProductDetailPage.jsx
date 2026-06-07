@@ -43,7 +43,7 @@ const ProductDetailPage = () => {
   const [related, setRelated] = useState([]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLoading(true); fetchProduct(); }, [id]);
+  useEffect(() => { setLoading(true); fetchProduct(); }, [id, user?.email]);
 
   useEffect(() => {
     if (user?.email && product) {
@@ -69,7 +69,7 @@ const ProductDetailPage = () => {
 
   const fetchProduct = async () => {
     try {
-      const res = await getProduct(id);
+      const res = await getProduct(id, user?.email);
       setProduct(res.data);
     } catch (e) {
       toast("商品が見つかりません", "error");
@@ -204,6 +204,18 @@ const ProductDetailPage = () => {
               {isSold && (
                 <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
                   この商品は売り切れです
+                </Alert>
+              )}
+
+              {product.resale_flagged && !isMine && (
+                <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+                  この商品は転売の可能性があると判定されています。購入は慎重にご検討ください。
+                </Alert>
+              )}
+
+              {isMine && product.hidden_by_penalty && (
+                <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+                  転売の疑いにより、この商品は現在他のユーザーに表示されていません。
                 </Alert>
               )}
 

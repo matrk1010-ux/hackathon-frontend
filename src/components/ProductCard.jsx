@@ -9,6 +9,7 @@ import {
   Box,
   Stack,
 } from "@mui/material";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ProductImage from "./ProductImage";
 
 const ProductCard = ({ product }) => {
@@ -34,6 +35,25 @@ const ProductCard = ({ product }) => {
         {/* 画像（無い場合はカテゴリ別プレースホルダー） */}
         <Box sx={{ position: "relative" }}>
           <ProductImage product={product} height={180} />
+          {product.resale_flagged && (
+            <Chip
+              icon={<WarningAmberIcon sx={{ fontSize: "0.9rem" }} />}
+              label="転売の可能性"
+              size="small"
+              color="warning"
+              sx={{
+                position: "absolute",
+                top: 8,
+                left: 8,
+                fontWeight: 700,
+                fontSize: "0.68rem",
+                height: 22,
+                bgcolor: "rgba(237,108,2,0.95)",
+                color: "white",
+                "& .MuiChip-icon": { color: "white" },
+              }}
+            />
+          )}
           {isSold && (
             <Box
               sx={{

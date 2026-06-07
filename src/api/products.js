@@ -4,9 +4,11 @@ import client from "./client";
 export const getProducts = (params) =>
   client.get("/products/", { params });
 
-// 商品詳細取得
-export const getProduct = (id) =>
-  client.get(`/products/${id}`);
+// 商品詳細取得（本人は転売非表示中の自分の商品も閲覧できるよう user_email を渡す）
+export const getProduct = (id, userEmail) =>
+  client.get(`/products/${id}`, {
+    params: userEmail ? { user_email: userEmail } : {},
+  });
 
 // 商品出品
 export const createProduct = (data, sellerEmail) =>

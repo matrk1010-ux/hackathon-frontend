@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
+import { AiSetProvider } from "./context/AiSetContext";
 import { createTheme, ThemeProvider, CssBaseline, Box } from "@mui/material";
 import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
@@ -40,6 +41,7 @@ function App() {
       <CssBaseline />
       <UserProvider>
         <ToastProvider>
+          <AiSetProvider>
           <BrowserRouter>
             <Header />
             <Routes>
@@ -53,6 +55,7 @@ function App() {
             <Box sx={{ height: { xs: 56, sm: 0 } }} />
             <BottomNav />
           </BrowserRouter>
+          </AiSetProvider>
         </ToastProvider>
       </UserProvider>
     </ThemeProvider>

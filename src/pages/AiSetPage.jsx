@@ -28,20 +28,30 @@ import SendIcon from "@mui/icons-material/Send";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import ProductImage from "../components/ProductImage";
 import { useUser } from "../context/UserContext";
+import { useAiSet } from "../context/AiSetContext";
 import { aiSetChat } from "../api/ai_set";
 import { bulkBuyProducts } from "../api/purchases";
 
 const AiSetPage = () => {
   const { user } = useUser();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [minBudget, setMinBudget] = useState("");
-  const [maxBudget, setMaxBudget] = useState("");
+  // ページ遷移後も会話・プラン・予算を保持するため Context から取得
+  const {
+    messages,
+    setMessages,
+    input,
+    setInput,
+    minBudget,
+    setMinBudget,
+    maxBudget,
+    setMaxBudget,
+    plans,
+    setPlans,
+    buyResult,
+    setBuyResult,
+  } = useAiSet();
   const [loading, setLoading] = useState(false);
-  const [plans, setPlans] = useState([]);
   const [buying, setBuying] = useState(false);
-  const [buyResult, setBuyResult] = useState(null);
   const [planToBuy, setPlanToBuy] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const bottomRef = useRef(null);

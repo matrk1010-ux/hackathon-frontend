@@ -21,12 +21,11 @@ import {
   ListItem,
   ListItemAvatar,
   Chip,
-  IconButton,
+  Checkbox,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SendIcon from "@mui/icons-material/Send";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
-import CloseIcon from "@mui/icons-material/Close";
 import ProductImage from "../components/ProductImage";
 import { useUser } from "../context/UserContext";
 import { aiSetChat } from "../api/ai_set";
@@ -44,16 +43,16 @@ const AiSetPage = () => {
   const [buying, setBuying] = useState(false);
   const [buyResult, setBuyResult] = useState(null);
   const [planToBuy, setPlanToBuy] = useState(null);
-  const [buyProducts, setBuyProducts] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, plans]);
 
-  // 購入確認ダイアログを開くたび、対象プランの商品を編集可能なリストとして展開
+  // 購入確認ダイアログを開くたび、対象プランの全商品を「選択済み」で初期化
   useEffect(() => {
-    setBuyProducts(planToBuy?.products || []);
+    setSelectedIds((planToBuy?.products || []).map((p) => p.id));
   }, [planToBuy]);
 
   const budgetInvalid =
@@ -90,8 +89,11 @@ const AiSetPage = () => {
   };
 
   const handleBuyPlan = async () => {
-    if (!user || !planToBuy || buyProducts.length === 0) return;
-    const products = buyProducts;
+    if (!user || !planToBuy || selectedIds.length === 0) return;
+    const products = (planToBuy.products || []).filter((p) =>
+      selectedIds.includes(p.id)
+    );
+    if (products.length === 0) return;
     setBuying(true);
     setPlanToBuy(null);
     try {
@@ -106,10 +108,14 @@ const AiSetPage = () => {
     }
   };
 
-  const dialogProducts = buyProducts;
-  const dialogTotal = buyProducts.reduce((sum, p) => sum + p.price, 0);
-  const removeBuyProduct = (id) =>
-    setBuyProducts((prev) => prev.filter((p) => p.id !== id));
+  const dialogProducts = planToBuy?.products || [];
+  const dialogTotal = dialogProducts
+    .filter((p) => selectedIds.includes(p.id))
+    .reduce((sum, p) => sum + p.price, 0);
+  const toggleBuyProduct = (id) =>
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", height: "calc(100vh - 64px)", display: "flex", flexDirection: "column" }}>
@@ -364,26 +370,25 @@ const AiSetPage = () => {
         <DialogTitle>「{planToBuy?.title}」を購入</DialogTitle>
         <DialogContent dividers>
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-            不要な商品は右の削除ボタンで外せます（合計に反映されます）
+            チェックを外すとその商品を購入対象から除けます（再度チェックで戻せます。合計に反映されます）
           </Typography>
           <List disablePadding>
-            {dialogProducts.map((product, idx) => (
+            {dialogProducts.map((product, idx) => {
+              const checked = selectedIds.includes(product.id);
+              return (
               <React.Fragment key={product.id}>
                 <ListItem
                   alignItems="flex-start"
                   disablePadding
-                  sx={{ py: 1.5, pr: 5 }}
-                  secondaryAction={
-                    <IconButton
-                      edge="end"
-                      aria-label="このプランから外す"
-                      onClick={() => removeBuyProduct(product.id)}
-                      disabled={dialogProducts.length <= 1}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  }
+                  sx={{ py: 1.5, opacity: checked ? 1 : 0.45 }}
                 >
+                  <Checkbox
+                    edge="start"
+                    checked={checked}
+                    onChange={() => toggleBuyProduct(product.id)}
+                    aria-label="このプランに含める"
+                    sx={{ mt: 1 }}
+                  />
                   <ListItemAvatar>
                     <Box sx={{ width: 64, height: 64, mr: 1, borderRadius: 1, overflow: "hidden" }}>
                       <ProductImage product={product} height={64} emojiSize={26} />
@@ -418,7 +423,8 @@ const AiSetPage = () => {
                 </ListItem>
                 {idx < dialogProducts.length - 1 && <Divider component="li" />}
               </React.Fragment>
-            ))}
+              );
+            })}
           </List>
           <Divider sx={{ my: 1.5 }} />
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
@@ -435,7 +441,7 @@ const AiSetPage = () => {
             variant="contained"
             startIcon={<ShoppingCartCheckoutIcon />}
             onClick={handleBuyPlan}
-            disabled={dialogProducts.length === 0}
+            disabled={selectedIds.length === 0}
           >
             購入する（¥{dialogTotal.toLocaleString()}）
           </Button>

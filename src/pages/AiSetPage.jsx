@@ -21,10 +21,12 @@ import {
   ListItem,
   ListItemAvatar,
   Chip,
+  IconButton,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SendIcon from "@mui/icons-material/Send";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
+import CloseIcon from "@mui/icons-material/Close";
 import ProductImage from "../components/ProductImage";
 import { useUser } from "../context/UserContext";
 import { aiSetChat } from "../api/ai_set";
@@ -42,11 +44,17 @@ const AiSetPage = () => {
   const [buying, setBuying] = useState(false);
   const [buyResult, setBuyResult] = useState(null);
   const [planToBuy, setPlanToBuy] = useState(null);
+  const [buyProducts, setBuyProducts] = useState([]);
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, plans]);
+
+  // 購入確認ダイアログを開くたび、対象プランの商品を編集可能なリストとして展開
+  useEffect(() => {
+    setBuyProducts(planToBuy?.products || []);
+  }, [planToBuy]);
 
   const budgetInvalid =
     minBudget !== "" && maxBudget !== "" && parseInt(maxBudget) < parseInt(minBudget);
@@ -82,8 +90,8 @@ const AiSetPage = () => {
   };
 
   const handleBuyPlan = async () => {
-    if (!user || !planToBuy) return;
-    const products = planToBuy.products;
+    if (!user || !planToBuy || buyProducts.length === 0) return;
+    const products = buyProducts;
     setBuying(true);
     setPlanToBuy(null);
     try {
@@ -98,8 +106,10 @@ const AiSetPage = () => {
     }
   };
 
-  const dialogProducts = planToBuy?.products || [];
-  const dialogTotal = planToBuy?.total_price || 0;
+  const dialogProducts = buyProducts;
+  const dialogTotal = buyProducts.reduce((sum, p) => sum + p.price, 0);
+  const removeBuyProduct = (id) =>
+    setBuyProducts((prev) => prev.filter((p) => p.id !== id));
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", height: "calc(100vh - 64px)", display: "flex", flexDirection: "column" }}>
@@ -353,10 +363,27 @@ const AiSetPage = () => {
       <Dialog open={Boolean(planToBuy)} onClose={() => setPlanToBuy(null)} maxWidth="sm" fullWidth>
         <DialogTitle>「{planToBuy?.title}」を購入</DialogTitle>
         <DialogContent dividers>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+            不要な商品は右の削除ボタンで外せます（合計に反映されます）
+          </Typography>
           <List disablePadding>
             {dialogProducts.map((product, idx) => (
               <React.Fragment key={product.id}>
-                <ListItem alignItems="flex-start" disablePadding sx={{ py: 1.5 }}>
+                <ListItem
+                  alignItems="flex-start"
+                  disablePadding
+                  sx={{ py: 1.5, pr: 5 }}
+                  secondaryAction={
+                    <IconButton
+                      edge="end"
+                      aria-label="このプランから外す"
+                      onClick={() => removeBuyProduct(product.id)}
+                      disabled={dialogProducts.length <= 1}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  }
+                >
                   <ListItemAvatar>
                     <Box sx={{ width: 64, height: 64, mr: 1, borderRadius: 1, overflow: "hidden" }}>
                       <ProductImage product={product} height={64} emojiSize={26} />
@@ -408,8 +435,9 @@ const AiSetPage = () => {
             variant="contained"
             startIcon={<ShoppingCartCheckoutIcon />}
             onClick={handleBuyPlan}
+            disabled={dialogProducts.length === 0}
           >
-            購入する
+            購入する（¥{dialogTotal.toLocaleString()}）
           </Button>
         </DialogActions>
       </Dialog>

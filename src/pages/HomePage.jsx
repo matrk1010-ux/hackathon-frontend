@@ -120,10 +120,10 @@ const HomePage = () => {
                 <AutoAwesomeIcon sx={{ color: "primary.main" }} />
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.3 }}>
-                    Shop the coast, curated by AI
+                    ログインをしてください
                   </Typography>
                   <Typography variant="body2" sx={{ color: "primary.main", opacity: 0.85 }}>
-                    ログインするとAIレコメンド機能が使えます
+                    出品・いいね・購入機能にはログインが必要です
                   </Typography>
                 </Box>
               </Box>

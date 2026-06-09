@@ -18,25 +18,12 @@ import {
   Paper,
   InputAdornment,
   IconButton,
-  Chip,
-  Stack,
 } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import GoogleIcon from "@mui/icons-material/Google";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-
-const CATEGORIES = [
-  "服・ファッション",
-  "本・漫画",
-  "家電・スマホ",
-  "スポーツ",
-  "おもちゃ",
-  "家具・インテリア",
-  "コスメ・美容",
-  "その他",
-];
 
 const HomePage = () => {
   const { user } = useUser();
@@ -45,21 +32,19 @@ const HomePage = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [keyword, setKeyword] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [category, setCategory] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [recLoading, setRecLoading] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchProducts(); }, [keyword, category]);
+  useEffect(() => { if (keyword) fetchProducts(); }, [keyword]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (user?.email) fetchRecommendations(); }, [user, category]);
+  useEffect(() => { if (user?.email) fetchRecommendations(); }, [user]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const params = { limit: 20 };
-      if (keyword) params.keyword = keyword;
-      if (category) params.category = category;
+      const params = { limit: 20, keyword };
       const res = await getProducts(params);
       setProducts(res.data);
     } catch (e) {
@@ -70,11 +55,14 @@ const HomePage = () => {
   };
 
   const fetchRecommendations = async () => {
+    setRecLoading(true);
     try {
-      const res = await getRecommendations(user.email, 10, category || null);
+      const res = await getRecommendations(user.email, 10);
       setRecommendations(res.data);
     } catch (e) {
       console.error(e);
+    } finally {
+      setRecLoading(false);
     }
   };
 
@@ -195,83 +183,56 @@ const HomePage = () => {
           </Button>
         </Box>
 
-        {/* カテゴリ絞り込み */}
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            mb: 4,
-            overflowX: "auto",
-            pb: 1,
-            "&::-webkit-scrollbar": { height: 6 },
-            "&::-webkit-scrollbar-thumb": { bgcolor: "grey.300", borderRadius: 3 },
-          }}
-        >
-          {["", ...CATEGORIES].map((cat) => {
-            const selected = category === cat;
-            return (
-              <Chip
-                key={cat || "all"}
-                label={cat || "すべて"}
-                onClick={() => setCategory(cat)}
-                sx={{
-                  fontWeight: 600,
-                  flexShrink: 0,
-                  border: "1px solid",
-                  bgcolor: selected ? "primary.tint" : "transparent",
-                  borderColor: selected ? "primary.main" : "divider",
-                  color: selected ? "primary.main" : "text.secondary",
-                  "&:hover": {
-                    bgcolor: selected ? "primary.tint" : "action.hover",
-                  },
-                }}
+        {keyword ? (
+          /* 検索結果 */
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+              {`「${keyword}」の検索結果`}
+            </Typography>
+            {loading ? (
+              <ProductGridSkeleton count={8} />
+            ) : products.length === 0 ? (
+              <EmptyState
+                icon={<SearchOffIcon sx={{ fontSize: 64 }} />}
+                message="商品が見つかりませんでした"
               />
-            );
-          })}
-        </Stack>
-
-        {/* レコメンド */}
-        {user && recommendations.length > 0 && !keyword && (
-          <Box sx={{ mb: 5 }}>
+            ) : (
+              <Grid container spacing={2}>
+                {products.map((p) => (
+                  <Grid item xs={6} sm={4} md={3} key={p.id}>
+                    <ProductCard product={p} />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Box>
+        ) : user ? (
+          /* あなたへのおすすめ */
+          <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <AutoAwesomeIcon color="primary" />
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                {category ? `あなたへのおすすめ・${category}` : "あなたへのおすすめ"}
+                あなたへのおすすめ
               </Typography>
             </Box>
-            <Grid container spacing={2}>
-              {recommendations.map((p) => (
-                <Grid item xs={6} sm={4} md={3} key={p.id}>
-                  <ProductCard product={p} />
-                </Grid>
-              ))}
-            </Grid>
+            {recLoading ? (
+              <ProductGridSkeleton count={8} />
+            ) : recommendations.length === 0 ? (
+              <EmptyState
+                icon={<AutoAwesomeIcon sx={{ fontSize: 64 }} />}
+                message="おすすめを準備中です"
+              />
+            ) : (
+              <Grid container spacing={2}>
+                {recommendations.map((p) => (
+                  <Grid item xs={6} sm={4} md={3} key={p.id}>
+                    <ProductCard product={p} />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
           </Box>
-        )}
-
-        {/* 商品一覧 */}
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-            {keyword ? `「${keyword}」の検索結果` : category ? category : "新着商品"}
-          </Typography>
-
-          {loading ? (
-            <ProductGridSkeleton count={8} />
-          ) : products.length === 0 ? (
-            <EmptyState
-              icon={<SearchOffIcon sx={{ fontSize: 64 }} />}
-              message="商品が見つかりませんでした"
-            />
-          ) : (
-            <Grid container spacing={2}>
-              {products.map((p) => (
-                <Grid item xs={6} sm={4} md={3} key={p.id}>
-                  <ProductCard product={p} />
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </Box>
+        ) : null}
       </Container>
     </Box>
   );

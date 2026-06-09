@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import StorefrontIcon from "@mui/icons-material/Storefront";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
@@ -36,7 +35,17 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="sticky" color="primary" elevation={2}>
+    <AppBar
+      position="sticky"
+      elevation={0}
+      sx={{
+        bgcolor: "background.paper",
+        color: "text.primary",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        boxShadow: "0 1px 2px rgba(20,40,60,.06)",
+      }}
+    >
       <Toolbar sx={{ gap: 1 }}>
         {/* ロゴ */}
         <Box
@@ -46,23 +55,26 @@ const Header = () => {
             flexGrow: 1,
             display: "flex",
             alignItems: "center",
-            gap: 1,
-            color: "inherit",
+            color: "primary.main",
             textDecoration: "none",
           }}
         >
-          <StorefrontIcon />
           <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
             <Typography
               variant="h6"
-              sx={{ fontWeight: 800, letterSpacing: ".04em", lineHeight: 1.1 }}
+              sx={{
+                fontWeight: 800,
+                letterSpacing: ".02em",
+                lineHeight: 1.1,
+                fontSize: { xs: "1.3rem", sm: "1.5rem" },
+              }}
             >
               Emporio
             </Typography>
             {!isMobile && (
               <Typography
                 variant="caption"
-                sx={{ opacity: 0.85, lineHeight: 1, fontSize: ".62rem", letterSpacing: ".18em" }}
+                sx={{ color: "text.secondary", lineHeight: 1, fontSize: ".62rem", letterSpacing: ".34em" }}
               >
                 エンボリオ
               </Typography>
@@ -76,7 +88,7 @@ const Header = () => {
             {!isMobile && (
               <>
                 <Button
-                  color="inherit"
+                  color="secondary"
                   startIcon={<AutoAwesomeIcon />}
                   component={Link}
                   to="/ai-set"
@@ -85,7 +97,8 @@ const Header = () => {
                   AIセット
                 </Button>
                 <Button
-                  color="inherit"
+                  variant="contained"
+                  color="primary"
                   startIcon={<AddBoxIcon />}
                   component={Link}
                   to="/sell"
@@ -101,7 +114,7 @@ const Header = () => {
               <Avatar
                 src={user.photoURL || ""}
                 alt={user.displayName || "U"}
-                sx={{ width: 36, height: 36, border: "2px solid #fff" }}
+                sx={{ width: 36, height: 36, border: "2px solid", borderColor: "divider", bgcolor: "primary.main" }}
               >
                 {(user.displayName || "U")[0]}
               </Avatar>

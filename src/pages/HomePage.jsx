@@ -105,29 +105,39 @@ const HomePage = () => {
         <Paper
           elevation={0}
           sx={{
-            bgcolor: "primary.main",
-            color: "white",
-            py: 3,
+            color: "primary.dark",
+            py: { xs: 4, md: 5 },
             borderRadius: 0,
+            background:
+              "linear-gradient(135deg, #E6DED4 0%, #C8D9E6 40%, #AFC3D4 100%)",
+            borderBottom: "1px solid",
+            borderColor: "divider",
           }}
         >
           <Container maxWidth="md">
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <AutoAwesomeIcon />
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  ログインするとAIレコメンド機能が使えます
-                </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <AutoAwesomeIcon sx={{ color: "primary.main" }} />
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.3 }}>
+                    Shop the coast, curated by AI
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "primary.main", opacity: 0.85 }}>
+                    ログインするとAIレコメンド機能が使えます
+                  </Typography>
+                </Box>
               </Box>
               <Button
                 variant="contained"
                 startIcon={<GoogleIcon />}
                 onClick={handleGoogleLogin}
                 sx={{
-                  bgcolor: "white",
-                  color: "primary.main",
+                  bgcolor: "primary.main",
+                  color: "#fff",
                   fontWeight: 700,
-                  "&:hover": { bgcolor: "grey.100" },
+                  px: 2.5,
+                  boxShadow: "0 14px 36px rgba(27,39,53,0.22)",
+                  "&:hover": { bgcolor: "primary.dark" },
                 }}
               >
                 Googleでログイン
@@ -146,17 +156,31 @@ const HomePage = () => {
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="キーワードで検索..."
             variant="outlined"
-            sx={{ bgcolor: "white" }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#FFFFFF",
+                transition: "background-color .15s ease, box-shadow .15s ease",
+                boxShadow: "0 8px 22px rgba(27,39,53,0.08)",
+                "& fieldset": { borderColor: "rgba(109,137,166,0.35)" },
+                "&:hover": { bgcolor: "#FFFFFF" },
+                "&:hover fieldset": { borderColor: "rgba(109,137,166,0.55)" },
+                "&.Mui-focused": {
+                  bgcolor: "#FFFFFF",
+                  boxShadow: "0 0 0 3px rgba(38,60,89,.15)",
+                },
+                "&.Mui-focused fieldset": { borderColor: "primary.main" },
+              },
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon color="action" />
+                  <SearchIcon sx={{ color: "text.secondary" }} />
                 </InputAdornment>
               ),
               endAdornment: searchInput && (
                 <InputAdornment position="end">
                   <IconButton size="small" onClick={handleClear}>
-                    <ClearIcon />
+                    <ClearIcon fontSize="small" />
                   </IconButton>
                 </InputAdornment>
               ),
@@ -183,23 +207,27 @@ const HomePage = () => {
             "&::-webkit-scrollbar-thumb": { bgcolor: "grey.300", borderRadius: 3 },
           }}
         >
-          <Chip
-            label="すべて"
-            color={category === "" ? "primary" : "default"}
-            variant={category === "" ? "filled" : "outlined"}
-            onClick={() => setCategory("")}
-            sx={{ fontWeight: 600, flexShrink: 0 }}
-          />
-          {CATEGORIES.map((cat) => (
-            <Chip
-              key={cat}
-              label={cat}
-              color={category === cat ? "primary" : "default"}
-              variant={category === cat ? "filled" : "outlined"}
-              onClick={() => setCategory(cat)}
-              sx={{ fontWeight: 600, flexShrink: 0 }}
-            />
-          ))}
+          {["", ...CATEGORIES].map((cat) => {
+            const selected = category === cat;
+            return (
+              <Chip
+                key={cat || "all"}
+                label={cat || "すべて"}
+                onClick={() => setCategory(cat)}
+                sx={{
+                  fontWeight: 600,
+                  flexShrink: 0,
+                  border: "1px solid",
+                  bgcolor: selected ? "primary.tint" : "transparent",
+                  borderColor: selected ? "primary.main" : "divider",
+                  color: selected ? "primary.main" : "text.secondary",
+                  "&:hover": {
+                    bgcolor: selected ? "primary.tint" : "action.hover",
+                  },
+                }}
+              />
+            );
+          })}
         </Stack>
 
         {/* レコメンド */}

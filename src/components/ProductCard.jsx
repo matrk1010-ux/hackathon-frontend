@@ -105,9 +105,22 @@ const ProductCard = ({ product }) => {
               />
             )}
           </Stack>
-          <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 700 }}>
+          <Box
+            component="span"
+            sx={{
+              display: "inline-block",
+              bgcolor: "#AFC3D4", // Ocean Pearl
+              color: "primary.dark",
+              fontWeight: 800,
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              fontSize: "0.95rem",
+              lineHeight: 1.4,
+            }}
+          >
             ¥{product.price.toLocaleString()}
-          </Typography>
+          </Box>
         </CardContent>
       </CardActionArea>
     </Card>

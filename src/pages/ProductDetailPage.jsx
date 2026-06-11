@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
-import { getProduct, getLikeStatus, likeProduct, unlikeProduct, recordView, getProducts } from "../api/products";
+import { getProduct, getLikeStatus, likeProduct, unlikeProduct, recordView } from "../api/products";
+import { getSimilarProducts } from "../api/recommendations";
 import { buyProduct } from "../api/purchases";
 import {
   Container,
@@ -54,14 +55,12 @@ const ProductDetailPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, product]);
 
-  // 同じカテゴリの関連商品を取得
+  // この商品に似た商品（embeddingのコサイン類似度順）を取得
   useEffect(() => {
-    if (!product?.category) return setRelated([]);
-    getProducts({ category: product.category, limit: 12 })
+    if (!product?.id) return setRelated([]);
+    getSimilarProducts(product.id, 4)
       .then((res) => {
-        const items = res.data
-          .filter((p) => p.id !== product.id && p.status === "available")
-          .slice(0, 4);
+        const items = res.data.filter((p) => p.id !== product.id);
         setRelated(items);
       })
       .catch(() => setRelated([]));
@@ -339,11 +338,11 @@ const ProductDetailPage = () => {
           </Box>
         </Paper>
 
-        {/* 関連商品 */}
+        {/* この商品に似た商品 */}
         {related.length > 0 && (
           <Box sx={{ mt: 5 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              関連商品
+              この商品に似た商品
             </Typography>
             <Grid container spacing={2}>
               {related.map((p) => (

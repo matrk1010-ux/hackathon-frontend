@@ -44,6 +44,8 @@ const CONDITIONS = [
   "全体的に状態が悪い",
 ];
 
+const MAX_IMAGES = 5; // 1商品あたりの画像上限（バックエンドと一致させる）
+
 const SellPage = () => {
   const { user } = useUser();
   const toast = useToast();
@@ -54,8 +56,8 @@ const SellPage = () => {
     price: "",
     category: "",
     condition: "",
-    image_url: "",
   });
+  const [images, setImages] = useState([]); // data URI の配列（先頭がサムネ）
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -105,21 +107,32 @@ const SellPage = () => {
     });
 
   const handleImageSelect = async (e) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files || []);
     e.target.value = ""; // 同じファイルを再選択できるようにリセット
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      return setError("画像ファイルを選択してください");
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      return setError("画像は10MB以下にしてください");
+    if (files.length === 0) return;
+
+    const remaining = MAX_IMAGES - images.length;
+    if (remaining <= 0) {
+      return setError(`画像は最大${MAX_IMAGES}枚までです`);
     }
     setError("");
     setUploading(true);
     try {
-      const dataUrl = await compressImage(file);
-      setForm((f) => ({ ...f, image_url: dataUrl }));
-      toast("画像を設定しました", "success");
+      const added = [];
+      for (const file of files.slice(0, remaining)) {
+        if (!file.type.startsWith("image/")) continue;
+        if (file.size > 10 * 1024 * 1024) {
+          setError("10MBを超える画像はスキップしました");
+          continue;
+        }
+        added.push(await compressImage(file));
+      }
+      if (added.length > 0) {
+        setImages((prev) => [...prev, ...added].slice(0, MAX_IMAGES));
+        if (files.length > remaining) {
+          toast(`画像は最大${MAX_IMAGES}枚までのため一部のみ追加しました`, "warning");
+        }
+      }
     } catch (err) {
       console.error(err);
       setError("画像の処理に失敗しました");
@@ -127,6 +140,9 @@ const SellPage = () => {
       setUploading(false);
     }
   };
+
+  const removeImage = (idx) =>
+    setImages((prev) => prev.filter((_, i) => i !== idx));
 
   const handleGenerateDescription = async () => {
     if (!form.title) return setError("まず商品名を入力してください");
@@ -152,7 +168,7 @@ const SellPage = () => {
     e.preventDefault();
     if (!form.title || !form.price) return setError("商品名と価格は必須です");
     if (!form.condition) return setError("商品の状態を選択してください");
-    if (!form.image_url) return setError("商品画像を選択してください");
+    if (images.length === 0) return setError("商品画像を1枚以上選択してください");
     setError("");
     setSubmitting(true);
     try {
@@ -163,7 +179,8 @@ const SellPage = () => {
           price: parseInt(form.price),
           category: form.category || null,
           condition: form.condition || null,
-          image_url: form.image_url || null,
+          image_url: images[0] || null,  // サムネ（後方互換）
+          image_urls: images,            // 全画像
         },
         user.email
       );
@@ -282,44 +299,88 @@ const SellPage = () => {
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
                 商品画像{" "}
-                <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                <Box component="span" sx={{ color: "error.main" }}>*</Box>{" "}
+                <Box component="span" sx={{ color: "text.secondary", fontWeight: 400, fontSize: 13 }}>
+                  （{images.length}/{MAX_IMAGES}）
+                </Box>
               </Typography>
               <Button
                 component="label"
                 variant="outlined"
                 startIcon={uploading ? <CircularProgress size={18} color="inherit" /> : <PhotoCameraIcon />}
-                disabled={uploading}
+                disabled={uploading || images.length >= MAX_IMAGES}
                 sx={{ fontWeight: 600 }}
               >
-                {uploading ? "処理中..." : form.image_url ? "画像を変更" : "画像を選択"}
-                <input type="file" accept="image/*" hidden onChange={handleImageSelect} />
+                {uploading ? "処理中..." : images.length > 0 ? "画像を追加" : "画像を選択"}
+                <input type="file" accept="image/*" multiple hidden onChange={handleImageSelect} />
               </Button>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                端末から画像を選べます（自動で縮小・圧縮されます）。出品には画像が1枚必要です。
+                端末から最大{MAX_IMAGES}枚まで選べます（自動で縮小・圧縮されます）。先頭の画像がサムネイルになります。
               </Typography>
             </Box>
 
             {/* 画像プレビュー */}
-            {form.image_url && (
-              <Box>
-                <Box sx={{ position: "relative", width: "100%" }}>
+            {images.length > 0 && (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+                {images.map((src, idx) => (
                   <Box
-                    component="img"
-                    src={form.image_url}
-                    alt="プレビュー"
-                    sx={{ width: "100%", maxHeight: 240, objectFit: "contain", borderRadius: 2, border: "1px solid #eee" }}
-                  />
-                  <Button
-                    size="small"
-                    color="error"
-                    variant="contained"
-                    startIcon={<DeleteOutlineIcon />}
-                    onClick={() => setForm((f) => ({ ...f, image_url: "" }))}
-                    sx={{ position: "absolute", top: 8, right: 8 }}
+                    key={idx}
+                    sx={{
+                      position: "relative",
+                      width: 100,
+                      height: 100,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: idx === 0 ? "2px solid" : "1px solid #eee",
+                      borderColor: idx === 0 ? "primary.main" : "#eee",
+                    }}
                   >
-                    削除
-                  </Button>
-                </Box>
+                    <Box
+                      component="img"
+                      src={src}
+                      alt={`プレビュー${idx + 1}`}
+                      sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+                    {idx === 0 && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          bgcolor: "primary.main",
+                          color: "#fff",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textAlign: "center",
+                          py: 0.25,
+                        }}
+                      >
+                        サムネ
+                      </Box>
+                    )}
+                    <Box
+                      onClick={() => removeImage(idx)}
+                      sx={{
+                        position: "absolute",
+                        top: 2,
+                        right: 2,
+                        width: 22,
+                        height: 22,
+                        borderRadius: "50%",
+                        bgcolor: "rgba(0,0,0,0.6)",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: "error.main" },
+                      }}
+                    >
+                      <DeleteOutlineIcon sx={{ fontSize: 16 }} />
+                    </Box>
+                  </Box>
+                ))}
               </Box>
             )}
 

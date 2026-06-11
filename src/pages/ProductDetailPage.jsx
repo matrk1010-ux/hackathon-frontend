@@ -41,6 +41,7 @@ const ProductDetailPage = () => {
   const [buying, setBuying] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [related, setRelated] = useState([]);
+  const [mainIdx, setMainIdx] = useState(0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setLoading(true); fetchProduct(); }, [id, user?.email]);
@@ -71,6 +72,7 @@ const ProductDetailPage = () => {
     try {
       const res = await getProduct(id, user?.email);
       setProduct(res.data);
+      setMainIdx(0);
     } catch (e) {
       toast("商品が見つかりません", "error");
       navigate("/");
@@ -146,6 +148,14 @@ const ProductDetailPage = () => {
   const isMine = user?.id === product.seller_id;
   const isSold = product.status === "sold";
 
+  // 全画像（最大5枚）。image_urls が無ければ単一 image_url を1枚として扱う。
+  const images = product.image_urls?.length
+    ? product.image_urls
+    : product.image_url
+    ? [product.image_url]
+    : [];
+  const safeIdx = Math.min(mainIdx, Math.max(0, images.length - 1));
+
   return (
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="md">
@@ -160,16 +170,61 @@ const ProductDetailPage = () => {
 
         <Paper elevation={2} sx={{ borderRadius: 3, overflow: "hidden" }}>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" } }}>
-            {/* 画像 */}
+            {/* 画像（メイン＋サムネイル一覧） */}
             <Box
               sx={{
                 width: { xs: "100%", md: "45%" },
-                minHeight: { xs: 280, md: 360 },
-                display: "flex",
                 flexShrink: 0,
+                display: "flex",
+                flexDirection: "column",
               }}
             >
-              <ProductImage product={product} height="100%" emojiSize={96} />
+              <Box
+                sx={{
+                  minHeight: { xs: 280, md: 360 },
+                  display: "flex",
+                }}
+              >
+                <ProductImage
+                  product={{ ...product, image_url: images[safeIdx] || product.image_url }}
+                  height="100%"
+                  emojiSize={96}
+                />
+              </Box>
+
+              {images.length > 1 && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    flexWrap: "wrap",
+                    p: 1.5,
+                    bgcolor: "grey.100",
+                  }}
+                >
+                  {images.map((src, idx) => (
+                    <Box
+                      key={idx}
+                      onClick={() => setMainIdx(idx)}
+                      component="img"
+                      src={src}
+                      alt={`画像${idx + 1}`}
+                      sx={{
+                        width: 56,
+                        height: 56,
+                        objectFit: "cover",
+                        borderRadius: 1,
+                        cursor: "pointer",
+                        border: idx === safeIdx ? "2px solid" : "2px solid transparent",
+                        borderColor: idx === safeIdx ? "primary.main" : "transparent",
+                        opacity: idx === safeIdx ? 1 : 0.75,
+                        transition: "opacity 0.15s",
+                        "&:hover": { opacity: 1 },
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
             </Box>
 
             {/* 情報 */}

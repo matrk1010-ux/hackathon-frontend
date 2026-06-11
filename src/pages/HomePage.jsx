@@ -57,7 +57,7 @@ const HomePage = () => {
   const fetchRecommendations = async () => {
     setRecLoading(true);
     try {
-      const res = await getRecommendations(user.email, 20);
+      const res = await getRecommendations(user.email, 30);
       setRecommendations(res.data);
     } catch (e) {
       console.error(e);

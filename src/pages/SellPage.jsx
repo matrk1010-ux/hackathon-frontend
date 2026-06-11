@@ -186,6 +186,7 @@ const SellPage = () => {
     e.preventDefault();
     if (!form.title || !form.price) return setError("商品名と価格は必須です");
     if (!form.condition) return setError("商品の状態を選択してください");
+    if (!form.image_url) return setError("商品画像を選択してください");
     setError("");
     setSubmitting(true);
     try {
@@ -326,7 +327,8 @@ const SellPage = () => {
             {/* 画像アップロード */}
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                商品画像
+                商品画像{" "}
+                <Box component="span" sx={{ color: "error.main" }}>*</Box>
               </Typography>
               <Button
                 component="label"
@@ -339,7 +341,7 @@ const SellPage = () => {
                 <input type="file" accept="image/*" hidden onChange={handleImageSelect} />
               </Button>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                端末から画像を選べます（自動で縮小・圧縮されます）。未選択の場合はカテゴリ別の画像が表示されます。
+                端末から画像を選べます（自動で縮小・圧縮されます）。出品には画像が1枚必要です。
               </Typography>
             </Box>
 

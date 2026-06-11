@@ -254,6 +254,11 @@ const AiSetPage = () => {
                         <ProductImage product={product} height={90} emojiSize={32} />
                         <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
                           <Typography variant="caption" noWrap display="block">{product.title}</Typography>
+                          {product.seller?.username && (
+                            <Typography variant="caption" noWrap display="block" color="text.secondary">
+                              出品者: {product.seller.username}
+                            </Typography>
+                          )}
                           <Typography variant="body2" fontWeight={700} color="primary">
                             ¥{product.price.toLocaleString()}
                           </Typography>
@@ -418,6 +423,11 @@ const AiSetPage = () => {
                         {product.category}
                         {product.category && product.condition && "　/　"}
                         {product.condition && `状態: ${product.condition}`}
+                      </Typography>
+                    )}
+                    {product.seller?.username && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        出品者: {product.seller.username}
                       </Typography>
                     )}
                     {product.description && (

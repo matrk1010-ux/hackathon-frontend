@@ -113,10 +113,10 @@ const Header = () => {
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0.5 }}>
               <Avatar
                 src={user.photoURL || ""}
-                alt={user.displayName || "U"}
+                alt={user.username || user.displayName || "U"}
                 sx={{ width: 36, height: 36, border: "2px solid", borderColor: "divider", bgcolor: "primary.main" }}
               >
-                {(user.displayName || "U")[0]}
+                {(user.username || user.displayName || "U")[0]}
               </Avatar>
             </IconButton>
             <Menu
@@ -128,7 +128,7 @@ const Header = () => {
             >
               <MenuItem disabled>
                 <Typography variant="body2" color="text.secondary">
-                  {user.displayName || user.username}
+                  {user.username || user.displayName}
                 </Typography>
               </MenuItem>
               <Divider />

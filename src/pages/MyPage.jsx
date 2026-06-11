@@ -4,6 +4,7 @@ import { useUser } from "../context/UserContext";
 import { getSellerProducts, deleteProduct, getLikedProducts } from "../api/products";
 import { getMyPurchases } from "../api/purchases";
 import { getResaleStatus, submitAppeal } from "../api/resale";
+import { updateUsername } from "../api/users";
 import ProductCard from "../components/ProductCard";
 import ProductGridSkeleton from "../components/ProductGridSkeleton";
 import EmptyState from "../components/EmptyState";
@@ -38,11 +39,12 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import EditIcon from "@mui/icons-material/Edit";
 import TextField from "@mui/material/TextField";
 import { useToast } from "../context/ToastContext";
 
 const MyPage = () => {
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const navigate = useNavigate();
   const toast = useToast();
   const [tab, setTab] = useState(0);
@@ -56,6 +58,9 @@ const MyPage = () => {
   const [appealOpen, setAppealOpen] = useState(false);
   const [appealMessage, setAppealMessage] = useState("");
   const [appealing, setAppealing] = useState(false);
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user?.email) { fetchData(); fetchResaleStatus(); } }, [user]);
@@ -81,6 +86,28 @@ const MyPage = () => {
       toast("送信に失敗しました", "error");
     } finally {
       setAppealing(false);
+    }
+  };
+
+  const openNameDialog = () => {
+    setNameInput(user.username || user.displayName || "");
+    setNameDialogOpen(true);
+  };
+
+  const handleSaveName = async () => {
+    const name = nameInput.trim();
+    if (!name) return;
+    setSavingName(true);
+    try {
+      const res = await updateUsername(user.email, name);
+      // 表示名（取引で他ユーザーに見える名前）を即時反映
+      setUser((prev) => ({ ...prev, ...res.data }));
+      toast("ユーザー名を変更しました", "success");
+      setNameDialogOpen(false);
+    } catch (e) {
+      toast(e.response?.data?.detail || "ユーザー名の変更に失敗しました", "error");
+    } finally {
+      setSavingName(false);
     }
   };
 
@@ -137,17 +164,37 @@ const MyPage = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <Avatar
               src={user.photoURL || ""}
-              alt={user.displayName || "U"}
+              alt={user.username || user.displayName || "U"}
               sx={{ width: 72, height: 72, border: "3px solid rgba(255,255,255,0.5)", fontSize: "1.8rem" }}
             >
-              {(user.displayName || "U")[0]}
+              {(user.username || user.displayName || "U")[0]}
             </Avatar>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                {user.displayName || user.username}
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  {user.username || user.displayName}
+                </Typography>
+                <Button
+                  size="small"
+                  startIcon={<EditIcon sx={{ fontSize: 16 }} />}
+                  onClick={openNameDialog}
+                  sx={{
+                    color: "white",
+                    borderColor: "rgba(255,255,255,0.6)",
+                    minWidth: 0,
+                    px: 1,
+                    "&:hover": { borderColor: "white", bgcolor: "rgba(255,255,255,0.12)" },
+                  }}
+                  variant="outlined"
+                >
+                  編集
+                </Button>
+              </Box>
               <Typography variant="body2" sx={{ opacity: 0.85 }}>
                 {user.email}
+              </Typography>
+              <Typography variant="caption" sx={{ opacity: 0.75, display: "block", mt: 0.3 }}>
+                このユーザー名が出品・取引時に他のユーザーへ表示されます
               </Typography>
             </Box>
           </Box>
@@ -382,6 +429,42 @@ const MyPage = () => {
             startIcon={appealing ? <CircularProgress size={16} color="inherit" /> : null}
           >
             送信する
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ユーザー名変更ダイアログ */}
+      <Dialog open={nameDialogOpen} onClose={() => setNameDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>ユーザー名を変更</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            ここで設定した名前が、出品・取引時に他のユーザーへ表示されます。
+          </DialogContentText>
+          <TextField
+            autoFocus
+            fullWidth
+            label="ユーザー名"
+            placeholder="例: emporio_taro"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            inputProps={{ maxLength: 50 }}
+            helperText={`${nameInput.length}/50`}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && nameInput.trim() && !savingName) handleSaveName();
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setNameDialogOpen(false)} color="inherit" disabled={savingName}>
+            キャンセル
+          </Button>
+          <Button
+            onClick={handleSaveName}
+            variant="contained"
+            disabled={savingName || !nameInput.trim()}
+            startIcon={savingName ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+            保存する
           </Button>
         </DialogActions>
       </Dialog>

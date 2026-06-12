@@ -418,16 +418,15 @@ const AiSetPage = () => {
                         ¥{product.price.toLocaleString()}
                       </Typography>
                     </Box>
-                    {(product.category || product.condition) && (
+                    {(product.category || product.condition || product.seller?.username) && (
                       <Typography variant="caption" color="text.secondary" display="block">
-                        {product.category}
-                        {product.category && product.condition && "　/　"}
-                        {product.condition && `状態: ${product.condition}`}
-                      </Typography>
-                    )}
-                    {product.seller?.username && (
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        出品者: {product.seller.username}
+                        {[
+                          product.category,
+                          product.condition && `状態: ${product.condition}`,
+                          product.seller?.username && `出品者: ${product.seller.username}`,
+                        ]
+                          .filter(Boolean)
+                          .join("　/　")}
                       </Typography>
                     )}
                     {product.description && (

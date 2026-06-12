@@ -33,7 +33,7 @@ Emporio（エンボリオ）の Web フロントエンド。API 仕様は `../ha
 
 ## API 呼び出しの約束
 - 所有者操作はメールをクエリで渡す（例 `createProduct(data, sellerEmail)` → `params:{seller_email}`）。
-- AI：`generateDescription(title,category,price,condition,notes)`、`analyzeImage(imageBase64)`、`aiSetChat(messages,minBudget,maxBudget)`。
+- AI：`generateDescription(title,category,price,condition,notes)`、`analyzeImage(imageBase64)`、`aiSetChat(messages)`。
 
 ## マスタ値（バックエンドと完全一致させる。ズレると AI 自動入力が弾かれる）
 - カテゴリ(8)：服・ファッション / 本・漫画 / 家電・スマホ / スポーツ / おもちゃ / 家具・インテリア / コスメ・美容 / その他

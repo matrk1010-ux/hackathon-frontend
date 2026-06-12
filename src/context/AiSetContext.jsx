@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 
-// AIセットの会話・プラン・予算をページ遷移後も保持するためのコンテキスト。
+// AIセットの会話・プランをページ遷移後も保持するためのコンテキスト。
 // （AiSetPage はルート切替でアンマウントされ useState が消えるため、
 //   残したい状態だけをここへ持ち上げる）
 const AiSetContext = createContext(null);
@@ -8,8 +8,6 @@ const AiSetContext = createContext(null);
 export const AiSetProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [minBudget, setMinBudget] = useState("");
-  const [maxBudget, setMaxBudget] = useState("");
   const [plans, setPlans] = useState([]);
   const [buyResult, setBuyResult] = useState(null);
 
@@ -20,10 +18,6 @@ export const AiSetProvider = ({ children }) => {
         setMessages,
         input,
         setInput,
-        minBudget,
-        setMinBudget,
-        maxBudget,
-        setMaxBudget,
         plans,
         setPlans,
         buyResult,

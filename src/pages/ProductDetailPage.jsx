@@ -315,10 +315,12 @@ const ProductDetailPage = () => {
                   <FavoriteIcon sx={{ fontSize: "1rem", color: "error.main" }} />
                   <Typography variant="body2">{product.like_count || 0}</Typography>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <VisibilityIcon sx={{ fontSize: "1rem" }} />
-                  <Typography variant="body2">{product.view_count || 0}</Typography>
-                </Box>
+                {isMine && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <VisibilityIcon sx={{ fontSize: "1rem" }} />
+                    <Typography variant="body2">{product.view_count || 0}</Typography>
+                  </Box>
+                )}
               </Box>
 
               {isSold && (

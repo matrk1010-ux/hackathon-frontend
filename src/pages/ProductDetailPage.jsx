@@ -46,6 +46,11 @@ import TextField from "@mui/material/TextField";
 import ProductImage from "../components/ProductImage";
 import ProductCard from "../components/ProductCard";
 
+// バックエンドの created_at は UTC（datetime.utcnow）だが末尾Zが無く、
+// JS は素のままだとローカル時刻と誤解する。TZ情報が無ければUTCとみなして変換する。
+const parseUtc = (s) =>
+  new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : `${s}Z`);
+
 const ProductDetailPage = () => {
   const { id } = useParams();
   const { user } = useUser();
@@ -232,8 +237,9 @@ const ProductDetailPage = () => {
             >
               <Box
                 sx={{
-                  minHeight: { xs: 280, md: 360 },
+                  height: { xs: 300, md: 380 },
                   display: "flex",
+                  bgcolor: "grey.100",
                 }}
               >
                 <ProductImage
@@ -444,7 +450,7 @@ const ProductDetailPage = () => {
                           {c.username}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {new Date(c.created_at).toLocaleString("ja-JP", {
+                          {parseUtc(c.created_at).toLocaleString("ja-JP", {
                             month: "numeric",
                             day: "numeric",
                             hour: "2-digit",

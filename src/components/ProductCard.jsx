@@ -10,11 +10,13 @@ import {
   Stack,
 } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import ProductImage from "./ProductImage";
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const isSold = product.status === "sold";
+  const likeCount = product.like_count || 0;
 
   return (
     <Card
@@ -66,6 +68,28 @@ const ProductCard = ({ product }) => {
               }}
             >
               <Chip label="SOLD" color="default" sx={{ bgcolor: "white", fontWeight: 700 }} />
+            </Box>
+          )}
+          {likeCount > 0 && (
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 6,
+                right: 6,
+                display: "flex",
+                alignItems: "center",
+                gap: 0.3,
+                bgcolor: "rgba(0,0,0,0.55)",
+                color: "white",
+                borderRadius: 1,
+                px: 0.6,
+                py: 0.15,
+              }}
+            >
+              <FavoriteIcon sx={{ fontSize: "0.8rem" }} />
+              <Typography variant="caption" sx={{ fontWeight: 700, lineHeight: 1 }}>
+                {likeCount}
+              </Typography>
             </Box>
           )}
         </Box>

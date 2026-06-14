@@ -11,3 +11,7 @@ export const getMe = (email) =>
 // 本人のユーザー名（取引時の表示名）を更新
 export const updateUsername = (email, username) =>
   client.patch("/users/me", { username }, { params: { email } });
+
+// 出品者プロフィール（出品者ページのヘッダー用）
+export const getSellerProfile = (email) =>
+  client.get(`/users/seller-profile/${encodeURIComponent(email)}`);

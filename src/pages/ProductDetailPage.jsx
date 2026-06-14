@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
-import { getProduct, getLikeStatus, likeProduct, unlikeProduct, recordView } from "../api/products";
+import {
+  getProduct,
+  getLikeStatus,
+  likeProduct,
+  unlikeProduct,
+  recordView,
+  getComments,
+  postComment,
+  deleteComment,
+} from "../api/products";
 import { getSimilarProducts } from "../api/recommendations";
 import { buyProduct } from "../api/purchases";
 import {
@@ -22,12 +31,18 @@ import {
   DialogActions,
   Avatar,
   Alert,
+  IconButton,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PersonIcon from "@mui/icons-material/Person";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import SendIcon from "@mui/icons-material/Send";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import TextField from "@mui/material/TextField";
 import ProductImage from "../components/ProductImage";
 import ProductCard from "../components/ProductCard";
 
@@ -43,6 +58,9 @@ const ProductDetailPage = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [related, setRelated] = useState([]);
   const [mainIdx, setMainIdx] = useState(0);
+  const [comments, setComments] = useState([]);
+  const [commentInput, setCommentInput] = useState("");
+  const [postingComment, setPostingComment] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setLoading(true); fetchProduct(); }, [id, user?.email]);
@@ -66,6 +84,40 @@ const ProductDetailPage = () => {
       .catch(() => setRelated([]));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
+
+  // コメント（購入前Q&A）を取得
+  useEffect(() => {
+    if (!product?.id) return setComments([]);
+    getComments(product.id)
+      .then((res) => setComments(res.data))
+      .catch(() => setComments([]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
+
+  const handlePostComment = async () => {
+    if (!user) return toast("ログインが必要です", "warning");
+    const body = commentInput.trim();
+    if (!body) return;
+    setPostingComment(true);
+    try {
+      const res = await postComment(product.id, user.email, body);
+      setComments((prev) => [...prev, res.data]);
+      setCommentInput("");
+    } catch (e) {
+      toast("コメントの投稿に失敗しました", "error");
+    } finally {
+      setPostingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await deleteComment(commentId, user.email);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (e) {
+      toast("削除に失敗しました", "error");
+    }
+  };
 
   const fetchProduct = async () => {
     try {
@@ -251,9 +303,21 @@ const ProductDetailPage = () => {
                 {product.title}
               </Typography>
 
-              <Typography variant="h4" color="primary" sx={{ fontWeight: 700, mb: 2 }}>
+              <Typography variant="h4" color="primary" sx={{ fontWeight: 700, mb: 1 }}>
                 ¥{product.price.toLocaleString()}
               </Typography>
+
+              {/* いいね数・閲覧数 */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, color: "text.secondary" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <FavoriteIcon sx={{ fontSize: "1rem", color: "error.main" }} />
+                  <Typography variant="body2">{product.like_count || 0}</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <VisibilityIcon sx={{ fontSize: "1rem" }} />
+                  <Typography variant="body2">{product.view_count || 0}</Typography>
+                </Box>
+              </Box>
 
               {isSold && (
                 <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
@@ -322,21 +386,122 @@ const ProductDetailPage = () => {
 
               <Divider sx={{ mb: 2 }} />
 
-              {/* 出品者 */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {/* 出品者（タップで出品者ページへ） */}
+              <Box
+                onClick={() =>
+                  product.seller?.email &&
+                  navigate(`/sellers/${encodeURIComponent(product.seller.email)}`)
+                }
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  cursor: product.seller?.email ? "pointer" : "default",
+                  p: 1,
+                  mx: -1,
+                  borderRadius: 2,
+                  transition: "background-color 0.15s",
+                  "&:hover": product.seller?.email ? { bgcolor: "grey.100" } : {},
+                }}
+              >
                 <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.light" }}>
                   <PersonIcon fontSize="small" />
                 </Avatar>
-                <Box>
+                <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="caption" color="text.secondary">出品者</Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {product.seller?.username || "不明"}
                   </Typography>
                 </Box>
+                {product.seller?.email && (
+                  <ChevronRightIcon sx={{ color: "text.secondary" }} />
+                )}
               </Box>
             </Box>
           </Box>
         </Paper>
+
+        {/* コメント（購入前Q&A） */}
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+            コメント（{comments.length}）
+          </Typography>
+          <Paper variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
+            {comments.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+                まだコメントはありません。気になることを質問してみましょう。
+              </Typography>
+            ) : (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {comments.map((c) => (
+                  <Box key={c.id} sx={{ display: "flex", gap: 1.5 }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.light" }}>
+                      <PersonIcon fontSize="small" />
+                    </Avatar>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {c.username}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {new Date(c.created_at).toLocaleString("ja-JP", {
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </Typography>
+                        {user?.id === c.user_id && (
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeleteComment(c.id)}
+                            sx={{ ml: "auto" }}
+                          >
+                            <DeleteOutlineIcon sx={{ fontSize: "1rem" }} />
+                          </IconButton>
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                        {c.body}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            {/* 入力欄 */}
+            {user ? (
+              <Box sx={{ display: "flex", gap: 1, mt: comments.length ? 2 : 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  multiline
+                  maxRows={4}
+                  placeholder="商品へのコメントを入力..."
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handlePostComment}
+                  disabled={postingComment || !commentInput.trim()}
+                  sx={{ minWidth: 56 }}
+                >
+                  <SendIcon />
+                </Button>
+              </Box>
+            ) : (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 2 }}
+              >
+                コメントするにはログインが必要です
+              </Typography>
+            )}
+          </Paper>
+        </Box>
 
         {/* この商品に似た商品 */}
         {related.length > 0 && (

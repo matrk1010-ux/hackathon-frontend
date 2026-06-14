@@ -18,12 +18,34 @@ import {
   Paper,
   InputAdornment,
   IconButton,
+  MenuItem,
+  Stack,
 } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import GoogleIcon from "@mui/icons-material/Google";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+
+// マスタ値（バックエンドと完全一致させる）
+const CATEGORIES = [
+  "服・ファッション",
+  "本・漫画",
+  "家電・スマホ",
+  "スポーツ",
+  "おもちゃ",
+  "家具・インテリア",
+  "コスメ・美容",
+  "その他",
+];
+const CONDITIONS = [
+  "新品・未使用",
+  "未使用に近い",
+  "目立った傷や汚れなし",
+  "やや傷や汚れあり",
+  "傷や汚れあり",
+  "全体的に状態が悪い",
+];
 
 const HomePage = () => {
   const { user } = useUser();
@@ -32,11 +54,20 @@ const HomePage = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [keyword, setKeyword] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [category, setCategory] = useState("");
+  const [condition, setCondition] = useState("");
+  const [sort, setSort] = useState("newest");
   const [loading, setLoading] = useState(false);
   const [recLoading, setRecLoading] = useState(false);
 
+  // 検索・フィルタ・並び替えのいずれかが有効、または未ログインのときは
+  // 「商品をさがす」一覧（ブラウズ）を表示。ログイン中で無操作のときだけおすすめを出す。
+  const hasFilter =
+    Boolean(keyword) || Boolean(category) || Boolean(condition) || sort !== "newest";
+  const showBrowse = hasFilter || !user;
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (keyword) fetchProducts(); }, [keyword]);
+  useEffect(() => { if (showBrowse) fetchProducts(); }, [keyword, category, condition, sort, showBrowse]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user?.email) fetchRecommendations(); }, [user]);
@@ -44,7 +75,10 @@ const HomePage = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const params = { limit: 20, keyword };
+      const params = { limit: 30, sort };
+      if (keyword) params.keyword = keyword;
+      if (category) params.category = category;
+      if (condition) params.condition = condition;
       const res = await getProducts(params);
       setProducts(res.data);
     } catch (e) {
@@ -183,11 +217,58 @@ const HomePage = () => {
           </Button>
         </Box>
 
-        {keyword ? (
-          /* 検索結果 */
+        {/* カテゴリ・状態・並び替え */}
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ mb: 3, flexWrap: "wrap", gap: 1.5 }}
+        >
+          <TextField
+            select
+            size="small"
+            label="カテゴリ"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
+          >
+            <MenuItem value="">すべて</MenuItem>
+            {CATEGORIES.map((c) => (
+              <MenuItem key={c} value={c}>{c}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="状態"
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+            sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
+          >
+            <MenuItem value="">すべて</MenuItem>
+            {CONDITIONS.map((c) => (
+              <MenuItem key={c} value={c}>{c}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="並び替え"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
+          >
+            <MenuItem value="newest">新着順</MenuItem>
+            <MenuItem value="price_asc">価格が安い順</MenuItem>
+            <MenuItem value="price_desc">価格が高い順</MenuItem>
+            <MenuItem value="likes">いいねが多い順</MenuItem>
+          </TextField>
+        </Stack>
+
+        {showBrowse ? (
+          /* 検索・絞り込み結果（ブラウズ） */
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              {`「${keyword}」の検索結果`}
+              {keyword ? `「${keyword}」の検索結果` : "商品をさがす"}
             </Typography>
             {loading ? (
               <ProductGridSkeleton count={8} />

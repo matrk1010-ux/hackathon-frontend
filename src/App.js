@@ -11,6 +11,7 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import SellPage from "./pages/SellPage";
 import MyPage from "./pages/MyPage";
 import AiSetPage from "./pages/AiSetPage";
+import SellerPage from "./pages/SellerPage";
 
 const FONT_FAMILY = [
   "-apple-system",
@@ -122,6 +123,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/products/:id" element={<ProductDetailPage />} />
+              <Route path="/sellers/:email" element={<SellerPage />} />
               <Route path="/sell" element={<SellPage />} />
               <Route path="/mypage" element={<MyPage />} />
               <Route path="/ai-set" element={<AiSetPage />} />

@@ -18,9 +18,23 @@ export const createProduct = (data, sellerEmail) =>
 export const deleteProduct = (productId, sellerEmail) =>
   client.delete(`/products/${productId}`, { params: { seller_email: sellerEmail } });
 
-// 自分の出品一覧
-export const getSellerProducts = (email, limit = 100) =>
-  client.get(`/products/seller/${email}`, { params: { limit } });
+// 出品者の商品一覧（publicOnly=true で公開導線向けに非表示・取り下げを除外）
+export const getSellerProducts = (email, limit = 100, publicOnly = false) =>
+  client.get(`/products/seller/${email}`, {
+    params: { limit, public_only: publicOnly },
+  });
+
+// 商品のコメント一覧（古い順）
+export const getComments = (productId) =>
+  client.get(`/products/${productId}/comments`);
+
+// コメント投稿
+export const postComment = (productId, userEmail, body) =>
+  client.post(`/products/${productId}/comments`, { body }, { params: { user_email: userEmail } });
+
+// コメント削除（投稿者本人のみ）
+export const deleteComment = (commentId, userEmail) =>
+  client.delete(`/products/comments/${commentId}`, { params: { user_email: userEmail } });
 
 // いいねした商品一覧
 export const getLikedProducts = (userEmail, limit = 100) =>

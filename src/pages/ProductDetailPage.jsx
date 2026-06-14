@@ -45,11 +45,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import TextField from "@mui/material/TextField";
 import ProductImage from "../components/ProductImage";
 import ProductCard from "../components/ProductCard";
-
-// バックエンドの created_at は UTC（datetime.utcnow）だが末尾Zが無く、
-// JS は素のままだとローカル時刻と誤解する。TZ情報が無ければUTCとみなして変換する。
-const parseUtc = (s) =>
-  new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : `${s}Z`);
+import { parseUtc } from "../utils/datetime";
 
 const ProductDetailPage = () => {
   const { id } = useParams();

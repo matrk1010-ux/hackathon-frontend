@@ -5,6 +5,7 @@ import { getSellerProfile } from "../api/users";
 import ProductCard from "../components/ProductCard";
 import ProductGridSkeleton from "../components/ProductGridSkeleton";
 import EmptyState from "../components/EmptyState";
+import { parseUtc } from "../utils/datetime";
 import {
   Container,
   Box,
@@ -86,7 +87,7 @@ const SellerPage = () => {
               </Box>
               {profile?.created_at && (
                 <Typography variant="caption" sx={{ opacity: 0.75, display: "block", mt: 0.3 }}>
-                  {new Date(profile.created_at).toLocaleDateString("ja-JP")} に登録
+                  {parseUtc(profile.created_at).toLocaleDateString("ja-JP")} に登録
                 </Typography>
               )}
             </Box>

@@ -42,6 +42,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EditIcon from "@mui/icons-material/Edit";
 import TextField from "@mui/material/TextField";
 import { useToast } from "../context/ToastContext";
+import { parseUtc } from "../utils/datetime";
 
 const MyPage = () => {
   const { user, setUser } = useUser();
@@ -354,7 +355,7 @@ const MyPage = () => {
                             <ListItemButton onClick={() => navigate(`/products/${purchase.product_id}`)}>
                               <ListItemText
                                 primary={purchase.product?.title || `商品ID: ${purchase.product_id}`}
-                                secondary={new Date(purchase.purchased_at).toLocaleDateString("ja-JP")}
+                                secondary={parseUtc(purchase.purchased_at).toLocaleDateString("ja-JP")}
                                 primaryTypographyProps={{ fontWeight: 600 }}
                               />
                               <Chip

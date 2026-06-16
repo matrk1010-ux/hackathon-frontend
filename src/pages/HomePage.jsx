@@ -60,11 +60,12 @@ const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [recLoading, setRecLoading] = useState(false);
 
-  // 検索・フィルタ・並び替えのいずれかが有効、または未ログインのときは
-  // 「商品をさがす」一覧（ブラウズ）を表示。ログイン中で無操作のときだけおすすめを出す。
+  // 検索・フィルタ・並び替えのいずれかが有効なときに「商品をさがす」一覧（ブラウズ）を表示。
+  // ログイン中で無操作のときだけおすすめを出す。未ログイン時は検索・絞り込みをするまで
+  // 商品（おすすめ含む）を表示しない。
   const hasFilter =
     Boolean(keyword) || Boolean(category) || Boolean(condition) || sort !== "newest";
-  const showBrowse = hasFilter || !user;
+  const showBrowse = hasFilter;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (showBrowse) fetchProducts(); }, [keyword, category, condition, sort, showBrowse]);

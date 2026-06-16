@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { fireAuth } from "../firebase";
 import { useUser } from "../context/UserContext";
@@ -50,15 +51,35 @@ const CONDITIONS = [
 const HomePage = () => {
   const { user } = useUser();
   const toast = useToast();
+  // 検索条件はURLクエリに持たせる。これで商品詳細から戻った時に検索結果が復元される
+  // （ローカルstateだとHomePage再マウントで条件が消え、ホーム初期画面に戻ってしまう）。
+  const [searchParams, setSearchParams] = useSearchParams();
+  const keyword = searchParams.get("q") || "";
+  const category = searchParams.get("category") || "";
+  const condition = searchParams.get("condition") || "";
+  const sort = searchParams.get("sort") || "newest";
+
   const [products, setProducts] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
-  const [keyword, setKeyword] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [category, setCategory] = useState("");
-  const [condition, setCondition] = useState("");
-  const [sort, setSort] = useState("newest");
+  const [searchInput, setSearchInput] = useState(keyword);
   const [loading, setLoading] = useState(false);
   const [recLoading, setRecLoading] = useState(false);
+
+  // 戻る/進むでURLのキーワードが変わったら入力欄も追従させる
+  useEffect(() => { setSearchInput(keyword); }, [keyword]);
+
+  // 1つの検索条件をURLクエリに反映（履歴を汚さないよう replace）
+  const setParam = (key, value, defaultValue = "") => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value && value !== defaultValue) next.set(key, value);
+        else next.delete(key);
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   // 検索・フィルタ・並び替えのいずれかが有効なときに「商品をさがす」一覧（ブラウズ）を表示。
   // ログイン中で無操作のときだけおすすめを出す。未ログイン時は検索・絞り込みをするまで
@@ -103,12 +124,12 @@ const HomePage = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setKeyword(searchInput);
+    setParam("q", searchInput.trim());
   };
 
   const handleClear = () => {
-    setKeyword("");
     setSearchInput("");
+    setParam("q", "");
   };
 
   const handleGoogleLogin = async () => {
@@ -229,7 +250,7 @@ const HomePage = () => {
             size="small"
             label="カテゴリ"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => setParam("category", e.target.value)}
             sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
           >
             <MenuItem value="">すべて</MenuItem>
@@ -242,7 +263,7 @@ const HomePage = () => {
             size="small"
             label="状態"
             value={condition}
-            onChange={(e) => setCondition(e.target.value)}
+            onChange={(e) => setParam("condition", e.target.value)}
             sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
           >
             <MenuItem value="">すべて</MenuItem>
@@ -255,7 +276,7 @@ const HomePage = () => {
             size="small"
             label="並び替え"
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => setParam("sort", e.target.value, "newest")}
             sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
           >
             <MenuItem value="newest">新着順</MenuItem>

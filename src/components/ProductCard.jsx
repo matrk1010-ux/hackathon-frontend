@@ -40,26 +40,19 @@ const ProductCard = ({ product }) => {
           {product.resale_flagged && (
             <Chip
               icon={<WarningAmberIcon sx={{ fontSize: "0.9rem" }} />}
-              label="転売アカウントによる販売の可能性"
+              label="転売の可能性"
               size="small"
               color="warning"
               sx={{
                 position: "absolute",
                 top: 8,
                 left: 8,
-                maxWidth: "calc(100% - 16px)",
-                height: "auto",
                 fontWeight: 700,
                 fontSize: "0.68rem",
-                py: 0.3,
+                height: 22,
                 bgcolor: "rgba(237,108,2,0.95)",
                 color: "white",
                 "& .MuiChip-icon": { color: "white" },
-                "& .MuiChip-label": {
-                  whiteSpace: "normal",
-                  lineHeight: 1.25,
-                  overflow: "visible",
-                },
               }}
             />
           )}

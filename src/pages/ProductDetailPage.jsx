@@ -331,7 +331,7 @@ const ProductDetailPage = () => {
 
               {product.resale_flagged && !isMine && (
                 <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
-                  この商品は転売の可能性があると判定されています。購入は慎重にご検討ください。
+                  この商品は転売アカウントによる販売の可能性があると判定されています。購入は慎重にご検討ください。
                 </Alert>
               )}
 

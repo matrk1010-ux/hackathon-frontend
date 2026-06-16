@@ -99,7 +99,7 @@ const SellerPage = () => {
         {/* 転売注意（段階1以上の出品者） */}
         {profile?.resale_stage >= 1 && (
           <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ borderRadius: 2, mb: 3 }}>
-            この出品者は転売の可能性が検知されています。購入は慎重にご検討ください。
+            この出品者は転売アカウントによる販売の可能性が検知されています。購入は慎重にご検討ください。
           </Alert>
         )}
 

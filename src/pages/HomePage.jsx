@@ -306,7 +306,7 @@ const HomePage = () => {
             position: "fixed",
             inset: 0,
             zIndex: 1300,
-            bgcolor: "background.default",
+            bgcolor: "#EAF1F7", // 寒色寄りのライトブルー（検索モードの背景）
             display: "flex",
             flexDirection: "column",
           }}

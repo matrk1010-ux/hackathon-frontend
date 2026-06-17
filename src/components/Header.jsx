@@ -17,18 +17,27 @@ import {
   IconButton,
   Divider,
   Badge,
-  ListItemText,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 
 const NOTIF_LABEL = {
   like: "をいいねしました",
   comment: "にコメントしました",
   sold: "が購入されました",
+};
+
+// 種別ごとのアイコン・色（いいね=赤 / コメント=青系 / 購入=緑）
+const NOTIF_META = {
+  like: { Icon: FavoriteIcon, color: "error.main", bg: "rgba(192,73,47,0.12)" },
+  comment: { Icon: ChatBubbleOutlineIcon, color: "secondary.main", bg: "rgba(109,137,166,0.16)" },
+  sold: { Icon: ShoppingBagIcon, color: "success.main", bg: "rgba(46,125,91,0.14)" },
 };
 
 const Header = () => {
@@ -167,23 +176,45 @@ const Header = () => {
                   <Typography variant="body2" color="text.secondary">通知はありません</Typography>
                 </Box>
               ) : (
-                notifs.map((n, i) => (
-                  <MenuItem
-                    key={i}
-                    onClick={() => { setNotifAnchor(null); navigate(`/products/${n.product_id}`); }}
-                    sx={{ whiteSpace: "normal", alignItems: "flex-start", py: 1 }}
-                  >
-                    <ListItemText
-                      primary={
-                        n.type === "sold"
-                          ? `「${n.product_title}」が購入されました`
-                          : `${n.actor}さんが「${n.product_title}」${NOTIF_LABEL[n.type] || ""}`
-                      }
-                      secondary={n.created_at ? parseUtc(n.created_at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
-                      primaryTypographyProps={{ variant: "body2" }}
-                    />
-                  </MenuItem>
-                ))
+                notifs.map((n, i) => {
+                  const meta = NOTIF_META[n.type] || NOTIF_META.like;
+                  const Icon = meta.Icon;
+                  return (
+                    <MenuItem
+                      key={i}
+                      onClick={() => { setNotifAnchor(null); navigate(`/products/${n.product_id}`); }}
+                      sx={{ whiteSpace: "normal", alignItems: "center", gap: 1.25, py: 1 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: "50%",
+                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: meta.bg,
+                          color: meta.color,
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 18 }} />
+                      </Box>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography sx={{ fontSize: 13, lineHeight: 1.45 }}>
+                          {n.type === "sold"
+                            ? `「${n.product_title}」が購入されました`
+                            : `${n.actor}さんが「${n.product_title}」${NOTIF_LABEL[n.type] || ""}`}
+                        </Typography>
+                        <Typography sx={{ fontSize: 11, color: "text.secondary", mt: 0.3 }}>
+                          {n.created_at
+                            ? parseUtc(n.created_at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })
+                            : ""}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  );
+                })
               )}
             </Menu>
 

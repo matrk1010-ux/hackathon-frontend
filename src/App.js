@@ -12,6 +12,7 @@ import SellPage from "./pages/SellPage";
 import MyPage from "./pages/MyPage";
 import AiSetPage from "./pages/AiSetPage";
 import SellerPage from "./pages/SellerPage";
+import ResaleNoticeDialog from "./components/ResaleNoticeDialog";
 
 const FONT_FAMILY = [
   "-apple-system",
@@ -131,6 +132,7 @@ function App() {
             {/* モバイルのボトムナビ分の余白 */}
             <Box sx={{ height: { xs: 56, sm: 0 } }} />
             <BottomNav />
+            <ResaleNoticeDialog />
           </BrowserRouter>
           </AiSetProvider>
         </ToastProvider>

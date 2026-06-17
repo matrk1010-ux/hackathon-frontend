@@ -76,9 +76,9 @@ const HomePage = () => {
   // 戻る/進むでURLのキーワードが変わったら入力欄も追従させる
   useEffect(() => { setSearchInput(keyword); }, [keyword]);
 
-  // 検索モードが開いている間は結果を取得（無条件なら新着順をそのまま表示）
+  // 検索条件が指定された時だけ結果を取得（開いた直後の無条件状態では何も出さない）
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (searchOpen) fetchProducts(); }, [keyword, category, condition, sort, searchOpen]);
+  useEffect(() => { if (searchOpen && hasFilter) fetchProducts(); }, [keyword, category, condition, sort, searchOpen, hasFilter]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user?.email) fetchRecommendations(); }, [user]);
@@ -345,29 +345,31 @@ const HomePage = () => {
             <Box sx={{ mt: 1.5 }}>{filterSelects}</Box>
           </Paper>
 
-          {/* 結果一覧（スクロール） */}
+          {/* 結果一覧（スクロール）。条件未指定（開いた直後）は何も表示しない */}
           <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
-            <Container maxWidth="lg" disableGutters>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                {keyword ? `「${keyword}」の検索結果` : "商品をさがす"}
-              </Typography>
-              {loading ? (
-                <ProductGridSkeleton count={8} />
-              ) : products.length === 0 ? (
-                <EmptyState
-                  icon={<SearchOffIcon sx={{ fontSize: 64 }} />}
-                  message="商品が見つかりませんでした"
-                />
-              ) : (
-                <Grid container spacing={2}>
-                  {products.map((p) => (
-                    <Grid item xs={6} sm={4} md={3} key={p.id}>
-                      <ProductCard product={p} />
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </Container>
+            {hasFilter && (
+              <Container maxWidth="lg" disableGutters>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  {keyword ? `「${keyword}」の検索結果` : "絞り込み結果"}
+                </Typography>
+                {loading ? (
+                  <ProductGridSkeleton count={8} />
+                ) : products.length === 0 ? (
+                  <EmptyState
+                    icon={<SearchOffIcon sx={{ fontSize: 64 }} />}
+                    message="商品が見つかりませんでした"
+                  />
+                ) : (
+                  <Grid container spacing={2}>
+                    {products.map((p) => (
+                      <Grid item xs={6} sm={4} md={3} key={p.id}>
+                        <ProductCard product={p} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+              </Container>
+            )}
           </Box>
         </Box>
       </Slide>

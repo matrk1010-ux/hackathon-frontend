@@ -1,8 +1,10 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { fireAuth } from "../firebase";
 import { useUser } from "../context/UserContext";
+import { getNotifications, markNotificationsRead } from "../api/notifications";
+import { parseUtc } from "../utils/datetime";
 import {
   AppBar,
   Toolbar,
@@ -14,18 +16,51 @@ import {
   MenuItem,
   IconButton,
   Divider,
+  Badge,
+  ListItemText,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+
+const NOTIF_LABEL = {
+  like: "をいいねしました",
+  comment: "にコメントしました",
+  sold: "が購入されました",
+};
 
 const Header = () => {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [notifAnchor, setNotifAnchor] = useState(null);
+  const [notifs, setNotifs] = useState([]);
+  const [unread, setUnread] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const loadNotifs = useCallback(() => {
+    if (!user?.email) return;
+    getNotifications(user.email)
+      .then((res) => {
+        setNotifs(res.data.items || []);
+        setUnread(res.data.unread_count || 0);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  // ログイン中はページ遷移ごとに通知を取得（未読バッジ更新）
+  useEffect(() => { loadNotifs(); }, [loadNotifs, location.pathname]);
+
+  const openNotif = (e) => {
+    setNotifAnchor(e.currentTarget);
+    if (user?.email && unread > 0) {
+      markNotificationsRead(user.email).then(() => setUnread(0)).catch(() => {});
+    }
+  };
 
   const handleLogout = async () => {
     setAnchorEl(null);
@@ -109,10 +144,53 @@ const Header = () => {
               </>
             )}
 
+            {/* 通知ベル */}
+            <IconButton onClick={openNotif} sx={{ color: "text.secondary" }} aria-label="通知">
+              <Badge badgeContent={unread} color="error" max={99}>
+                <NotificationsNoneIcon />
+              </Badge>
+            </IconButton>
+            <Menu
+              anchorEl={notifAnchor}
+              open={Boolean(notifAnchor)}
+              onClose={() => setNotifAnchor(null)}
+              transformOrigin={{ horizontal: "right", vertical: "top" }}
+              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+              slotProps={{ paper: { sx: { width: 320, maxHeight: 420 } } }}
+            >
+              <Box sx={{ px: 2, py: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>通知</Typography>
+              </Box>
+              <Divider />
+              {notifs.length === 0 ? (
+                <Box sx={{ px: 2, py: 3, textAlign: "center" }}>
+                  <Typography variant="body2" color="text.secondary">通知はありません</Typography>
+                </Box>
+              ) : (
+                notifs.map((n, i) => (
+                  <MenuItem
+                    key={i}
+                    onClick={() => { setNotifAnchor(null); navigate(`/products/${n.product_id}`); }}
+                    sx={{ whiteSpace: "normal", alignItems: "flex-start", py: 1 }}
+                  >
+                    <ListItemText
+                      primary={
+                        n.type === "sold"
+                          ? `「${n.product_title}」が購入されました`
+                          : `${n.actor}さんが「${n.product_title}」${NOTIF_LABEL[n.type] || ""}`
+                      }
+                      secondary={n.created_at ? parseUtc(n.created_at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                      primaryTypographyProps={{ variant: "body2" }}
+                    />
+                  </MenuItem>
+                ))
+              )}
+            </Menu>
+
             {/* アバター → マイページメニュー */}
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0.5 }}>
               <Avatar
-                src={user.photoURL || ""}
+                src={user.avatar_url || user.photoURL || ""}
                 alt={user.username || user.displayName || "U"}
                 sx={{ width: 36, height: 36, border: "2px solid", borderColor: "divider", bgcolor: "primary.main" }}
               >

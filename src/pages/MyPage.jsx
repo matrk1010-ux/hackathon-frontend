@@ -4,7 +4,7 @@ import { useUser } from "../context/UserContext";
 import { getSellerProducts, deleteProduct, getLikedProducts } from "../api/products";
 import { getMyPurchases } from "../api/purchases";
 import { getResaleStatus, submitAppeal } from "../api/resale";
-import { updateUsername } from "../api/users";
+import { updateProfile } from "../api/users";
 import ProductCard from "../components/ProductCard";
 import ProductGridSkeleton from "../components/ProductGridSkeleton";
 import EmptyState from "../components/EmptyState";
@@ -61,6 +61,9 @@ const MyPage = () => {
   const [appealing, setAppealing] = useState(false);
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [bioInput, setBioInput] = useState("");
+  const [avatarInput, setAvatarInput] = useState(""); // data URI or ""
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [savingName, setSavingName] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,7 +95,43 @@ const MyPage = () => {
 
   const openNameDialog = () => {
     setNameInput(user.username || user.displayName || "");
+    setBioInput(user.bio || "");
+    setAvatarInput(user.avatar_url || "");
     setNameDialogOpen(true);
+  };
+
+  // アバター用：正方形に縮小・圧縮して data URI 化
+  const handleAvatarSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !file.type.startsWith("image/")) return;
+    setAvatarUploading(true);
+    try {
+      const dataUri = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const size = Math.min(img.width, img.height);
+            const canvas = document.createElement("canvas");
+            canvas.width = canvas.height = 256;
+            canvas
+              .getContext("2d")
+              .drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 256, 256);
+            resolve(canvas.toDataURL("image/jpeg", 0.8));
+          };
+          img.onerror = reject;
+          img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      setAvatarInput(dataUri);
+    } catch (err) {
+      toast("画像の処理に失敗しました", "error");
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   const handleSaveName = async () => {
@@ -100,13 +139,17 @@ const MyPage = () => {
     if (!name) return;
     setSavingName(true);
     try {
-      const res = await updateUsername(user.email, name);
-      // 表示名（取引で他ユーザーに見える名前）を即時反映
+      const res = await updateProfile(user.email, {
+        username: name,
+        avatar_url: avatarInput || "",
+        bio: bioInput,
+      });
+      // 表示名・アバター・自己紹介を即時反映
       setUser((prev) => ({ ...prev, ...res.data }));
-      toast("ユーザー名を変更しました", "success");
+      toast("プロフィールを更新しました", "success");
       setNameDialogOpen(false);
     } catch (e) {
-      toast(e.response?.data?.detail || "ユーザー名の変更に失敗しました", "error");
+      toast(e.response?.data?.detail || "プロフィールの更新に失敗しました", "error");
     } finally {
       setSavingName(false);
     }
@@ -164,7 +207,7 @@ const MyPage = () => {
         <Container maxWidth="lg">
           <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <Avatar
-              src={user.photoURL || ""}
+              src={user.avatar_url || user.photoURL || ""}
               alt={user.username || user.displayName || "U"}
               sx={{ width: 72, height: 72, border: "3px solid rgba(255,255,255,0.5)", fontSize: "1.8rem" }}
             >
@@ -194,8 +237,13 @@ const MyPage = () => {
               <Typography variant="body2" sx={{ opacity: 0.85 }}>
                 {user.email}
               </Typography>
+              {user.bio && (
+                <Typography variant="body2" sx={{ opacity: 0.95, mt: 0.5, whiteSpace: "pre-wrap" }}>
+                  {user.bio}
+                </Typography>
+              )}
               <Typography variant="caption" sx={{ opacity: 0.75, display: "block", mt: 0.3 }}>
-                このユーザー名が出品・取引時に他のユーザーへ表示されます
+                このプロフィールが出品・取引時に他のユーザーへ表示されます
               </Typography>
             </Box>
           </Box>
@@ -279,17 +327,27 @@ const MyPage = () => {
                               />
                             )}
                           </Box>
-                          <Button
-                            fullWidth
-                            size="small"
-                            color="error"
-                            variant="outlined"
-                            startIcon={<DeleteOutlineIcon />}
-                            onClick={() => setWithdrawTarget(p)}
-                            sx={{ mt: 0.5 }}
-                          >
-                            取り下げる
-                          </Button>
+                          <Box sx={{ display: "flex", gap: 0.5, mt: 0.5 }}>
+                            <Button
+                              fullWidth
+                              size="small"
+                              variant="outlined"
+                              startIcon={<EditIcon sx={{ fontSize: 16 }} />}
+                              onClick={() => navigate(`/products/${p.id}/edit`)}
+                            >
+                              編集
+                            </Button>
+                            <Button
+                              fullWidth
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              startIcon={<DeleteOutlineIcon />}
+                              onClick={() => setWithdrawTarget(p)}
+                            >
+                              取り下げる
+                            </Button>
+                          </Box>
                         </Box>
                       </Grid>
                     ))}
@@ -434,15 +492,42 @@ const MyPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ユーザー名変更ダイアログ */}
+      {/* プロフィール編集ダイアログ */}
       <Dialog open={nameDialogOpen} onClose={() => setNameDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>ユーザー名を変更</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>プロフィールを編集</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            ここで設定した名前が、出品・取引時に他のユーザーへ表示されます。
+            ここで設定した内容が、出品・取引時に他のユーザーへ表示されます。
           </DialogContentText>
+
+          {/* アバター画像 */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <Avatar
+              src={avatarInput || user.photoURL || ""}
+              sx={{ width: 64, height: 64, bgcolor: "primary.light", fontSize: "1.6rem" }}
+            >
+              {(nameInput || "U")[0]}
+            </Avatar>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Button
+                component="label"
+                size="small"
+                variant="outlined"
+                disabled={avatarUploading}
+                startIcon={avatarUploading ? <CircularProgress size={14} /> : null}
+              >
+                {avatarUploading ? "処理中..." : "画像を選択"}
+                <input type="file" accept="image/*" hidden onChange={handleAvatarSelect} />
+              </Button>
+              {avatarInput && (
+                <Button size="small" color="inherit" onClick={() => setAvatarInput("")}>
+                  画像を削除
+                </Button>
+              )}
+            </Box>
+          </Box>
+
           <TextField
-            autoFocus
             fullWidth
             label="ユーザー名"
             placeholder="例: emporio_taro"
@@ -450,9 +535,18 @@ const MyPage = () => {
             onChange={(e) => setNameInput(e.target.value)}
             inputProps={{ maxLength: 50 }}
             helperText={`${nameInput.length}/50`}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && nameInput.trim() && !savingName) handleSaveName();
-            }}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="自己紹介"
+            placeholder="例: 主に本やゲームを出品しています。即発送します。"
+            value={bioInput}
+            onChange={(e) => setBioInput(e.target.value)}
+            multiline
+            minRows={3}
+            inputProps={{ maxLength: 300 }}
+            helperText={`${bioInput.length}/300`}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>

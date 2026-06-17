@@ -14,6 +14,10 @@ export const getProduct = (id, userEmail) =>
 export const createProduct = (data, sellerEmail) =>
   client.post("/products/", data, { params: { seller_email: sellerEmail } });
 
+// 出品の更新（本人のみ・バックエンドで403）
+export const updateProduct = (productId, data, sellerEmail) =>
+  client.put(`/products/${productId}`, data, { params: { seller_email: sellerEmail } });
+
 // 出品取り下げ（削除）
 export const deleteProduct = (productId, sellerEmail) =>
   client.delete(`/products/${productId}`, { params: { seller_email: sellerEmail } });

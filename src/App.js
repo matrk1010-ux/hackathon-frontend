@@ -126,6 +126,7 @@ function App() {
               <Route path="/products/:id" element={<ProductDetailPage />} />
               <Route path="/sellers/:email" element={<SellerPage />} />
               <Route path="/sell" element={<SellPage />} />
+              <Route path="/products/:id/edit" element={<SellPage />} />
               <Route path="/mypage" element={<MyPage />} />
               <Route path="/ai-set" element={<AiSetPage />} />
             </Routes>

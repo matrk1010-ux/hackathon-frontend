@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
-import { createProduct } from "../api/products";
+import { createProduct, updateProduct, getProduct } from "../api/products";
 import { generateDescription } from "../api/ai";
 import {
   Container,
@@ -50,6 +50,8 @@ const SellPage = () => {
   const { user } = useUser();
   const toast = useToast();
   const navigate = useNavigate();
+  const { id } = useParams(); // 編集モード時に商品IDが入る
+  const isEdit = Boolean(id);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -61,7 +63,33 @@ const SellPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(isEdit);
   const [error, setError] = useState("");
+
+  // 編集モード：既存の出品内容を読み込んでフォームへ反映
+  useEffect(() => {
+    if (!isEdit || !user?.email) return;
+    setLoadingProduct(true);
+    getProduct(id, user.email)
+      .then((res) => {
+        const p = res.data;
+        setForm({
+          title: p.title || "",
+          description: p.description || "",
+          price: p.price != null ? String(p.price) : "",
+          category: p.category || "",
+          condition: p.condition || "",
+        });
+        const imgs = p.image_urls?.length ? p.image_urls : p.image_url ? [p.image_url] : [];
+        setImages(imgs);
+      })
+      .catch(() => {
+        toast("商品の読み込みに失敗しました", "error");
+        navigate("/mypage");
+      })
+      .finally(() => setLoadingProduct(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user?.email]);
 
   if (!user) {
     return (
@@ -171,23 +199,27 @@ const SellPage = () => {
     if (images.length === 0) return setError("商品画像を1枚以上選択してください");
     setError("");
     setSubmitting(true);
+    const payload = {
+      title: form.title,
+      description: form.description || null,
+      price: parseInt(form.price),
+      category: form.category || null,
+      condition: form.condition || null,
+      image_url: images[0] || null,  // サムネ（後方互換）
+      image_urls: images,            // 全画像
+    };
     try {
-      await createProduct(
-        {
-          title: form.title,
-          description: form.description || null,
-          price: parseInt(form.price),
-          category: form.category || null,
-          condition: form.condition || null,
-          image_url: images[0] || null,  // サムネ（後方互換）
-          image_urls: images,            // 全画像
-        },
-        user.email
-      );
-      toast("出品しました！", "success");
-      navigate("/");
+      if (isEdit) {
+        await updateProduct(id, payload, user.email);
+        toast("出品内容を更新しました", "success");
+        navigate(`/products/${id}`);
+      } else {
+        await createProduct(payload, user.email);
+        toast("出品しました！", "success");
+        navigate("/");
+      }
     } catch (e) {
-      setError(e.response?.data?.detail || "出品に失敗しました");
+      setError(e.response?.data?.detail || (isEdit ? "更新に失敗しました" : "出品に失敗しました"));
     } finally {
       setSubmitting(false);
     }
@@ -197,8 +229,14 @@ const SellPage = () => {
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh", py: 4 }}>
       <Container maxWidth="sm">
         <Typography variant="h5" sx={{ fontWeight: 700, mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-          <SellIcon color="primary" /> 商品を出品する
+          <SellIcon color="primary" /> {isEdit ? "出品を編集する" : "商品を出品する"}
         </Typography>
+
+        {loadingProduct && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+            <CircularProgress />
+          </Box>
+        )}
 
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setError("")}>
@@ -206,6 +244,7 @@ const SellPage = () => {
           </Alert>
         )}
 
+        {!loadingProduct && (
         <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
           <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
@@ -393,10 +432,11 @@ const SellPage = () => {
               disabled={submitting || uploading}
               sx={{ fontWeight: 700, py: 1.5 }}
             >
-              {submitting ? <CircularProgress size={22} color="inherit" /> : "出品する"}
+              {submitting ? <CircularProgress size={22} color="inherit" /> : isEdit ? "更新する" : "出品する"}
             </Button>
           </Box>
         </Paper>
+        )}
       </Container>
     </Box>
   );

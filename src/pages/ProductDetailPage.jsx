@@ -408,7 +408,7 @@ const ProductDetailPage = () => {
                   "&:hover": product.seller?.email ? { bgcolor: "grey.100" } : {},
                 }}
               >
-                <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.light" }}>
+                <Avatar src={product.seller?.avatar_url || ""} sx={{ width: 32, height: 32, bgcolor: "primary.light" }}>
                   <PersonIcon fontSize="small" />
                 </Avatar>
                 <Box sx={{ flexGrow: 1 }}>

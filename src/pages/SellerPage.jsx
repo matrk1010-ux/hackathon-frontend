@@ -63,6 +63,7 @@ const SellerPage = () => {
           </Button>
           <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <Avatar
+              src={profile?.avatar_url || ""}
               sx={{
                 width: 72,
                 height: 72,
@@ -85,8 +86,13 @@ const SellerPage = () => {
                   売却済み {profile?.sold_count ?? sold.length}
                 </Typography>
               </Box>
+              {profile?.bio && (
+                <Typography variant="body2" sx={{ opacity: 0.95, mt: 0.75, whiteSpace: "pre-wrap" }}>
+                  {profile.bio}
+                </Typography>
+              )}
               {profile?.created_at && (
-                <Typography variant="caption" sx={{ opacity: 0.75, display: "block", mt: 0.3 }}>
+                <Typography variant="caption" sx={{ opacity: 0.75, display: "block", mt: 0.5 }}>
                   {parseUtc(profile.created_at).toLocaleDateString("ja-JP")} に登録
                 </Typography>
               )}

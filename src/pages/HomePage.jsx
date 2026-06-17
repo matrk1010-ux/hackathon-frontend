@@ -21,10 +21,12 @@ import {
   IconButton,
   MenuItem,
   Stack,
+  Slide,
 } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import GoogleIcon from "@mui/icons-material/Google";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
@@ -51,8 +53,7 @@ const CONDITIONS = [
 const HomePage = () => {
   const { user } = useUser();
   const toast = useToast();
-  // 検索条件はURLクエリに持たせる。これで商品詳細から戻った時に検索結果が復元される
-  // （ローカルstateだとHomePage再マウントで条件が消え、ホーム初期画面に戻ってしまう）。
+  // 検索条件はURLクエリに持たせる。これで商品詳細から戻った時に検索結果が復元される。
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get("q") || "";
   const category = searchParams.get("category") || "";
@@ -64,9 +65,23 @@ const HomePage = () => {
   const [searchInput, setSearchInput] = useState(keyword);
   const [loading, setLoading] = useState(false);
   const [recLoading, setRecLoading] = useState(false);
+  // 検索欄タップで開く全画面の検索モード。URLに検索条件が乗っていれば（詳細から戻った時など）
+  // 自動で開いた状態にして結果を復元する。
+  const [manualOpen, setManualOpen] = useState(false);
+
+  const hasFilter =
+    Boolean(keyword) || Boolean(category) || Boolean(condition) || sort !== "newest";
+  const searchOpen = manualOpen || hasFilter;
 
   // 戻る/進むでURLのキーワードが変わったら入力欄も追従させる
   useEffect(() => { setSearchInput(keyword); }, [keyword]);
+
+  // 検索モードが開いている間は結果を取得（無条件なら新着順をそのまま表示）
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (searchOpen) fetchProducts(); }, [keyword, category, condition, sort, searchOpen]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (user?.email) fetchRecommendations(); }, [user]);
 
   // 1つの検索条件をURLクエリに反映（履歴を汚さないよう replace）
   const setParam = (key, value, defaultValue = "") => {
@@ -80,19 +95,6 @@ const HomePage = () => {
       { replace: true }
     );
   };
-
-  // 検索・フィルタ・並び替えのいずれかが有効なときに「商品をさがす」一覧（ブラウズ）を表示。
-  // ログイン中で無操作のときだけおすすめを出す。未ログイン時は検索・絞り込みをするまで
-  // 商品（おすすめ含む）を表示しない。
-  const hasFilter =
-    Boolean(keyword) || Boolean(category) || Boolean(condition) || sort !== "newest";
-  const showBrowse = hasFilter;
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (showBrowse) fetchProducts(); }, [keyword, category, condition, sort, showBrowse]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (user?.email) fetchRecommendations(); }, [user]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -132,6 +134,13 @@ const HomePage = () => {
     setParam("q", "");
   };
 
+  // 検索モードを閉じる：条件をすべて消してホーム（おすすめ）へ戻る
+  const closeSearch = () => {
+    setManualOpen(false);
+    setSearchInput("");
+    setSearchParams({}, { replace: true });
+  };
+
   const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -141,6 +150,50 @@ const HomePage = () => {
       toast("ログインに失敗しました", "error");
     }
   };
+
+  const filterSelects = (
+    <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", gap: 1.5 }}>
+      <TextField
+        select
+        size="small"
+        label="カテゴリ"
+        value={category}
+        onChange={(e) => setParam("category", e.target.value)}
+        sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
+      >
+        <MenuItem value="">すべて</MenuItem>
+        {CATEGORIES.map((c) => (
+          <MenuItem key={c} value={c}>{c}</MenuItem>
+        ))}
+      </TextField>
+      <TextField
+        select
+        size="small"
+        label="状態"
+        value={condition}
+        onChange={(e) => setParam("condition", e.target.value)}
+        sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
+      >
+        <MenuItem value="">すべて</MenuItem>
+        {CONDITIONS.map((c) => (
+          <MenuItem key={c} value={c}>{c}</MenuItem>
+        ))}
+      </TextField>
+      <TextField
+        select
+        size="small"
+        label="並び替え"
+        value={sort}
+        onChange={(e) => setParam("sort", e.target.value, "newest")}
+        sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
+      >
+        <MenuItem value="newest">新着順</MenuItem>
+        <MenuItem value="price_asc">価格が安い順</MenuItem>
+        <MenuItem value="price_desc">価格が高い順</MenuItem>
+        <MenuItem value="likes">いいねが多い順</MenuItem>
+      </TextField>
+    </Stack>
+  );
 
   return (
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>
@@ -192,125 +245,33 @@ const HomePage = () => {
       )}
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* 検索バー */}
-        <Box component="form" onSubmit={handleSearch} sx={{ mb: 4 }}>
-          <TextField
-            fullWidth
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="キーワードで検索..."
-            variant="outlined"
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                bgcolor: "#FFFFFF",
-                transition: "background-color .15s ease, box-shadow .15s ease",
-                boxShadow: "0 8px 22px rgba(27,39,53,0.08)",
-                "& fieldset": { borderColor: "rgba(109,137,166,0.35)" },
-                "&:hover": { bgcolor: "#FFFFFF" },
-                "&:hover fieldset": { borderColor: "rgba(109,137,166,0.55)" },
-                "&.Mui-focused": {
-                  bgcolor: "#FFFFFF",
-                  boxShadow: "0 0 0 3px rgba(38,60,89,.15)",
-                },
-                "&.Mui-focused fieldset": { borderColor: "primary.main" },
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "text.secondary" }} />
-                </InputAdornment>
-              ),
-              endAdornment: searchInput && (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={handleClear}>
-                    <ClearIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            sx={{ mt: 1, display: "none" }}
-          >
-            検索
-          </Button>
+        {/* 検索バー（タップで全画面の検索モードを開く） */}
+        <Box
+          onClick={() => setManualOpen(true)}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            px: 2,
+            py: 1.5,
+            mb: 4,
+            bgcolor: "#FFFFFF",
+            borderRadius: 2,
+            border: "1px solid rgba(109,137,166,0.35)",
+            boxShadow: "0 8px 22px rgba(27,39,53,0.08)",
+            cursor: "pointer",
+            transition: "box-shadow .15s ease",
+            "&:hover": { boxShadow: "0 8px 22px rgba(27,39,53,0.16)" },
+          }}
+        >
+          <SearchIcon sx={{ color: "text.secondary" }} />
+          <Typography color="text.secondary">
+            キーワード・カテゴリ・状態で検索
+          </Typography>
         </Box>
 
-        {/* カテゴリ・状態・並び替え */}
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{ mb: 3, flexWrap: "wrap", gap: 1.5 }}
-        >
-          <TextField
-            select
-            size="small"
-            label="カテゴリ"
-            value={category}
-            onChange={(e) => setParam("category", e.target.value)}
-            sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
-          >
-            <MenuItem value="">すべて</MenuItem>
-            {CATEGORIES.map((c) => (
-              <MenuItem key={c} value={c}>{c}</MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            size="small"
-            label="状態"
-            value={condition}
-            onChange={(e) => setParam("condition", e.target.value)}
-            sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
-          >
-            <MenuItem value="">すべて</MenuItem>
-            {CONDITIONS.map((c) => (
-              <MenuItem key={c} value={c}>{c}</MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            size="small"
-            label="並び替え"
-            value={sort}
-            onChange={(e) => setParam("sort", e.target.value, "newest")}
-            sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
-          >
-            <MenuItem value="newest">新着順</MenuItem>
-            <MenuItem value="price_asc">価格が安い順</MenuItem>
-            <MenuItem value="price_desc">価格が高い順</MenuItem>
-            <MenuItem value="likes">いいねが多い順</MenuItem>
-          </TextField>
-        </Stack>
-
-        {showBrowse ? (
-          /* 検索・絞り込み結果（ブラウズ） */
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              {keyword ? `「${keyword}」の検索結果` : "商品をさがす"}
-            </Typography>
-            {loading ? (
-              <ProductGridSkeleton count={8} />
-            ) : products.length === 0 ? (
-              <EmptyState
-                icon={<SearchOffIcon sx={{ fontSize: 64 }} />}
-                message="商品が見つかりませんでした"
-              />
-            ) : (
-              <Grid container spacing={2}>
-                {products.map((p) => (
-                  <Grid item xs={6} sm={4} md={3} key={p.id}>
-                    <ProductCard product={p} />
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </Box>
-        ) : user ? (
-          /* あなたへのおすすめ */
+        {/* おすすめ（ログイン中のみ／おすすめ順） */}
+        {user && (
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <AutoAwesomeIcon color="primary" />
@@ -335,8 +296,81 @@ const HomePage = () => {
               </Grid>
             )}
           </Box>
-        ) : null}
+        )}
       </Container>
+
+      {/* 全画面の検索モード（ぬるっとスライドイン） */}
+      <Slide direction="up" in={searchOpen} mountOnEnter unmountOnExit>
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1300,
+            bgcolor: "background.default",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* 上部バー：戻る＋キーワード入力 */}
+          <Paper elevation={2} sx={{ borderRadius: 0, p: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <IconButton onClick={closeSearch} aria-label="検索を閉じる">
+                <ArrowBackIcon />
+              </IconButton>
+              <Box component="form" onSubmit={handleSearch} sx={{ flexGrow: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  autoFocus
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="キーワードで検索..."
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: "text.secondary" }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchInput && (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={handleClear}>
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
+            </Box>
+            <Box sx={{ mt: 1.5 }}>{filterSelects}</Box>
+          </Paper>
+
+          {/* 結果一覧（スクロール） */}
+          <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
+            <Container maxWidth="lg" disableGutters>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                {keyword ? `「${keyword}」の検索結果` : "商品をさがす"}
+              </Typography>
+              {loading ? (
+                <ProductGridSkeleton count={8} />
+              ) : products.length === 0 ? (
+                <EmptyState
+                  icon={<SearchOffIcon sx={{ fontSize: 64 }} />}
+                  message="商品が見つかりませんでした"
+                />
+              ) : (
+                <Grid container spacing={2}>
+                  {products.map((p) => (
+                    <Grid item xs={6} sm={4} md={3} key={p.id}>
+                      <ProductCard product={p} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Container>
+          </Box>
+        </Box>
+      </Slide>
     </Box>
   );
 };

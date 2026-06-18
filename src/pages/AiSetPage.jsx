@@ -23,6 +23,7 @@ import {
   Checkbox,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SendIcon from "@mui/icons-material/Send";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import ProductImage from "../components/ProductImage";
 import { useUser } from "../context/UserContext";
@@ -423,7 +424,7 @@ const AiSetPage = () => {
       {/* 入力エリア */}
       <Divider />
       <Box sx={{ p: 2, bgcolor: "background.paper" }}>
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-end" }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <TextField
             fullWidth
             size="small"
@@ -445,22 +446,11 @@ const AiSetPage = () => {
           />
           <Button
             variant="contained"
-            color="primary"
             onClick={sendMessage}
             disabled={loading || !input.trim()}
-            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <AutoAwesomeIcon />}
-            sx={{
-              minWidth: 150,
-              height: 52,
-              px: 2.5,
-              fontWeight: 800,
-              fontSize: "1rem",
-              borderRadius: 2,
-              flexShrink: 0,
-              boxShadow: "0 6px 16px rgba(27,39,53,0.22)",
-            }}
+            sx={{ minWidth: 56 }}
           >
-            {loading ? "提案中..." : "AIに相談"}
+            <SendIcon />
           </Button>
         </Box>
       </Box>

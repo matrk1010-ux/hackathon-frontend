@@ -83,7 +83,7 @@ const Header = () => {
       position="sticky"
       elevation={0}
       sx={{
-        bgcolor: "background.paper",
+        background: "linear-gradient(135deg, #E6DED4 0%, #C8D9E6 40%, #AFC3D4 100%)",
         color: "text.primary",
         borderBottom: "1px solid",
         borderColor: "divider",

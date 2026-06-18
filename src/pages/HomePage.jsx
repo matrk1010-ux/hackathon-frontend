@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { fireAuth } from "../firebase";
 import { useUser } from "../context/UserContext";
@@ -27,6 +27,7 @@ import {
   InputLabel,
   Select,
   OutlinedInput,
+  Fab,
 } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SearchIcon from "@mui/icons-material/Search";
@@ -58,6 +59,7 @@ const CONDITIONS = [
 const HomePage = () => {
   const { user } = useUser();
   const toast = useToast();
+  const navigate = useNavigate();
   // 検索条件はURLクエリに持たせる。これで商品詳細から戻った時に検索結果が復元される。
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get("q") || "";
@@ -321,6 +323,27 @@ const HomePage = () => {
           </Box>
         )}
       </Container>
+
+      {/* AIセットへの大きな導線（右下固定） */}
+      <Fab
+        variant="extended"
+        color="primary"
+        onClick={() => navigate("/ai-set")}
+        sx={{
+          position: "fixed",
+          bottom: { xs: 72, sm: 28 },
+          right: { xs: 16, sm: 28 },
+          zIndex: 1200,
+          px: 2.5,
+          py: 3,
+          fontWeight: 800,
+          fontSize: "1rem",
+          boxShadow: "0 12px 28px rgba(27,39,53,0.32)",
+        }}
+      >
+        <AutoAwesomeIcon sx={{ mr: 1 }} />
+        AIセット
+      </Fab>
 
       {/* 全画面の検索モード（ぬるっとスライドイン） */}
       <Slide direction="up" in={searchOpen} mountOnEnter unmountOnExit>

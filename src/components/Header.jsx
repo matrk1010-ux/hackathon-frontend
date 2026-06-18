@@ -99,7 +99,7 @@ const Header = () => {
             flexGrow: 1,
             display: "flex",
             alignItems: "center",
-            color: "primary.main",
+            color: "#2F4A72", // ロゴだけ少し濃いめの青
             textDecoration: "none",
           }}
         >

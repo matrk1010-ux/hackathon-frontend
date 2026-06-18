@@ -22,6 +22,11 @@ import {
   MenuItem,
   Stack,
   Slide,
+  Checkbox,
+  FormControl,
+  InputLabel,
+  Select,
+  OutlinedInput,
 } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SearchIcon from "@mui/icons-material/Search";
@@ -57,7 +62,8 @@ const HomePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get("q") || "";
   const category = searchParams.get("category") || "";
-  const condition = searchParams.get("condition") || "";
+  const condition = searchParams.get("condition") || ""; // カンマ区切り（複数選択）
+  const conditionList = condition ? condition.split(",") : [];
   const sort = searchParams.get("sort") || "newest";
 
   const [products, setProducts] = useState([]);
@@ -166,19 +172,36 @@ const HomePage = () => {
           <MenuItem key={c} value={c}>{c}</MenuItem>
         ))}
       </TextField>
-      <TextField
-        select
-        size="small"
-        label="状態"
-        value={condition}
-        onChange={(e) => setParam("condition", e.target.value)}
-        sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}
-      >
-        <MenuItem value="">すべて</MenuItem>
-        {CONDITIONS.map((c) => (
-          <MenuItem key={c} value={c}>{c}</MenuItem>
-        ))}
-      </TextField>
+      <FormControl size="small" sx={{ minWidth: 150, bgcolor: "#fff", borderRadius: 1 }}>
+        <InputLabel id="cond-label" shrink>状態</InputLabel>
+        <Select
+          labelId="cond-label"
+          multiple
+          displayEmpty
+          value={conditionList}
+          onChange={(e) => {
+            const v = e.target.value;
+            setParam("condition", (typeof v === "string" ? v.split(",") : v).join(","));
+          }}
+          input={<OutlinedInput notched label="状態" />}
+          renderValue={(sel) =>
+            sel.length === 0 ? (
+              <Box component="span" sx={{ color: "text.disabled" }}>すべて</Box>
+            ) : sel.length === 1 ? (
+              sel[0]
+            ) : (
+              `${sel.length}件選択中`
+            )
+          }
+        >
+          {CONDITIONS.map((c) => (
+            <MenuItem key={c} value={c}>
+              <Checkbox checked={conditionList.includes(c)} size="small" sx={{ p: 0.5, mr: 0.5 }} />
+              {c}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       <TextField
         select
         size="small"

@@ -439,7 +439,7 @@ const ProductDetailPage = () => {
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {comments.map((c) => (
                   <Box key={c.id} sx={{ display: "flex", gap: 1.5 }}>
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.light" }}>
+                    <Avatar src={c.avatar_url || ""} sx={{ width: 32, height: 32, bgcolor: "primary.light" }}>
                       <PersonIcon fontSize="small" />
                     </Avatar>
                     <Box sx={{ flexGrow: 1 }}>

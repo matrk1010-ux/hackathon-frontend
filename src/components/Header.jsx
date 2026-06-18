@@ -36,7 +36,7 @@ const NOTIF_LABEL = {
 // 種別ごとのアイコン・色（いいね=赤 / コメント=青系 / 購入=緑）
 const NOTIF_META = {
   like: { Icon: FavoriteIcon, color: "error.main", bg: "rgba(192,73,47,0.12)" },
-  comment: { Icon: ChatBubbleOutlineIcon, color: "secondary.main", bg: "rgba(109,137,166,0.16)" },
+  comment: { Icon: ChatBubbleOutlineIcon, color: "#1976d2", bg: "rgba(25,118,210,0.12)" },
   sold: { Icon: ShoppingBagIcon, color: "success.main", bg: "rgba(46,125,91,0.14)" },
 };
 

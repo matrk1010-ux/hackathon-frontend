@@ -26,7 +26,7 @@ const FONT_FAMILY = [
 
 // Coastal Commerce パレット
 const COASTAL = {
-  deepCurrent: "#263C59", // primary
+  deepCurrent: "#46658C", // primary（淡めの紺。旧 #263C59 から変更）
   darkDetail: "#1B2735", // 最濃ディテール
   coastalSlate: "#6D89A6", // 区切り線・サブ
   oceanPearl: "#AFC3D4", // 価格・セルのハイライト

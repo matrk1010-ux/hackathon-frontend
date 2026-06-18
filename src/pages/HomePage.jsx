@@ -27,7 +27,6 @@ import {
   InputLabel,
   Select,
   OutlinedInput,
-  Fab,
 } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SearchIcon from "@mui/icons-material/Search";
@@ -270,29 +269,41 @@ const HomePage = () => {
       )}
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* 検索バー（タップで全画面の検索モードを開く） */}
-        <Box
-          onClick={() => setManualOpen(true)}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            px: 2,
-            py: 1.5,
-            mb: 4,
-            bgcolor: "#FFFFFF",
-            borderRadius: 2,
-            border: "1px solid rgba(109,137,166,0.35)",
-            boxShadow: "0 8px 22px rgba(27,39,53,0.08)",
-            cursor: "pointer",
-            transition: "box-shadow .15s ease",
-            "&:hover": { boxShadow: "0 8px 22px rgba(27,39,53,0.16)" },
-          }}
-        >
-          <SearchIcon sx={{ color: "text.secondary" }} />
-          <Typography color="text.secondary">
-            キーワード・カテゴリ・状態で検索
-          </Typography>
+        {/* 検索バー（タップで全画面の検索モードを開く）＋ AIセット機能への導線 */}
+        <Box sx={{ display: "flex", gap: 1.5, mb: 4, alignItems: "stretch" }}>
+          <Box
+            onClick={() => setManualOpen(true)}
+            sx={{
+              flexGrow: 1,
+              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: 2,
+              py: 1.5,
+              bgcolor: "#FFFFFF",
+              borderRadius: 2,
+              border: "1px solid rgba(109,137,166,0.35)",
+              boxShadow: "0 8px 22px rgba(27,39,53,0.08)",
+              cursor: "pointer",
+              transition: "box-shadow .15s ease",
+              "&:hover": { boxShadow: "0 8px 22px rgba(27,39,53,0.16)" },
+            }}
+          >
+            <SearchIcon sx={{ color: "text.secondary" }} />
+            <Typography color="text.secondary" noWrap>
+              キーワード・カテゴリ・状態で検索
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AutoAwesomeIcon />}
+            onClick={() => navigate("/ai-set")}
+            sx={{ flexShrink: 0, px: { xs: 1.5, sm: 2.5 }, fontWeight: 700, borderRadius: 2, whiteSpace: "nowrap" }}
+          >
+            AIセット機能
+          </Button>
         </Box>
 
         {/* おすすめ（ログイン中のみ／おすすめ順） */}
@@ -323,27 +334,6 @@ const HomePage = () => {
           </Box>
         )}
       </Container>
-
-      {/* AIセットへの大きな導線（右下固定） */}
-      <Fab
-        variant="extended"
-        color="primary"
-        onClick={() => navigate("/ai-set")}
-        sx={{
-          position: "fixed",
-          bottom: { xs: 72, sm: 28 },
-          right: { xs: 16, sm: 28 },
-          zIndex: 1200,
-          px: 2.5,
-          py: 3,
-          fontWeight: 800,
-          fontSize: "1rem",
-          boxShadow: "0 12px 28px rgba(27,39,53,0.32)",
-        }}
-      >
-        <AutoAwesomeIcon sx={{ mr: 1 }} />
-        AIセット
-      </Fab>
 
       {/* 全画面の検索モード（ぬるっとスライドイン） */}
       <Slide direction="up" in={searchOpen} mountOnEnter unmountOnExit>

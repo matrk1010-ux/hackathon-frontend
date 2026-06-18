@@ -21,7 +21,6 @@ import {
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import AddBoxIcon from "@mui/icons-material/AddBox";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
@@ -130,27 +129,16 @@ const Header = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {/* AIセット・出品ボタン（モバイルでは下部ナビに集約） */}
             {!isMobile && (
-              <>
-                <Button
-                  color="secondary"
-                  startIcon={<AutoAwesomeIcon />}
-                  component={Link}
-                  to="/ai-set"
-                  sx={{ fontWeight: 600 }}
-                >
-                  AIセット
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AddBoxIcon />}
-                  component={Link}
-                  to="/sell"
-                  sx={{ fontWeight: 600 }}
-                >
-                  出品する
-                </Button>
-              </>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddBoxIcon />}
+                component={Link}
+                to="/sell"
+                sx={{ fontWeight: 600 }}
+              >
+                出品する
+              </Button>
             )}
 
             {/* 通知ベル */}
